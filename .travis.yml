@@ -34,6 +34,9 @@ before_install:
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
   - travis_retry sudo apt-get update -qq
   - travis_retry sudo apt-get install eatmydata  # to speedup some installations
+  # install git-annex with the relevant bits
+  # no recommends to avoid inheriting the entire multimedia stack
+  - travis_retry sudo eatmydata apt-get install --no-install-recommends git-annex-standalone aria2 git-remote-gcrypt lsof gnupg nocache
 
 install:
   # Install standalone build of git-annex for the recent enough version
