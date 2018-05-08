@@ -24,8 +24,8 @@ from ..nodes.misc import sub
 from ..nodes.misc import skip_if
 from ..nodes.misc import func_to_node
 from ..nodes.annex import Annexificator
-from ...consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
-from ...support.strings import get_replacement_dict
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from datalad.support.strings import get_replacement_dict
 
 from datalad.support.network import get_cached_url_content
 

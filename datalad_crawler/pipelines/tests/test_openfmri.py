@@ -25,27 +25,27 @@ from ...nodes.misc import Sink, assign, range_node, interrupt_if
 from ...nodes.annex import Annexificator, initiate_dataset
 from ...pipeline import load_pipeline_from_module
 
-from ....support.stats import ActivityStats
-from ....support.gitrepo import GitRepo
-from ....support.annexrepo import AnnexRepo
+from datalad.support.stats import ActivityStats
+from datalad.support.gitrepo import GitRepo
+from datalad.support.annexrepo import AnnexRepo
 
-from ....api import clean
-from ....utils import chpwd
-from ....utils import find_files
-from ....utils import swallow_logs
-from ....tests.utils import integration
-from ....tests.utils import (with_tree, File)
-from ....tests.utils import SkipTest
-from ....tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from ....tests.utils import assert_in, assert_not_in
-from ....tests.utils import skip_if_no_module
-from ....tests.utils import with_tempfile
-from ....tests.utils import serve_path_via_http
-from ....tests.utils import skip_if_no_network
-from ....tests.utils import use_cassette
-from ....tests.utils import ok_file_has_content
-from ....tests.utils import ok_file_under_git
-from ....tests.utils import ok_clean_git
+from datalad.api import clean
+from datalad.utils import chpwd
+from datalad.utils import find_files
+from datalad.utils import swallow_logs
+from datalad.tests.utils import integration
+from datalad.tests.utils import (with_tree, File)
+from datalad.tests.utils import SkipTest
+from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils import assert_in, assert_not_in
+from datalad.tests.utils import skip_if_no_module
+from datalad.tests.utils import with_tempfile
+from datalad.tests.utils import serve_path_via_http
+from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils import use_cassette
+from datalad.tests.utils import ok_file_has_content
+from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils import ok_clean_git
 
 from .. import openfmri
 from ..openfmri import pipeline as ofpipeline

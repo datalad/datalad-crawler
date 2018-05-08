@@ -21,8 +21,8 @@ from ..nodes.misc import get_disposition_filename
 from ..nodes.misc import find_files
 from ..nodes.misc import debug
 from ..nodes.annex import Annexificator
-from ...consts import ARCHIVES_SPECIAL_REMOTE
-from ...consts import DATALAD_SPECIAL_REMOTE
+from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
 
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.fcptable")

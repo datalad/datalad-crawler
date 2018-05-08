@@ -24,9 +24,9 @@ from ..nodes.misc import skip_if
 from ..nodes.misc import debug
 from ..nodes.misc import fix_permissions
 from ..nodes.annex import Annexificator
-from ...support.s3 import get_versioned_url
-from ...utils import updated
-from ...consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
+from datalad.support.s3 import get_versioned_url
+from datalad.utils import updated
+from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
 from datalad.downloaders.providers import Providers
 
 # For S3 crawling

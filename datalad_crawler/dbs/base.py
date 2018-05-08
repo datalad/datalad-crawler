@@ -19,11 +19,11 @@ from os.path import join as opj, exists, lexists, realpath, basename, dirname
 from os.path import normpath
 from os.path import isabs
 
-from ...utils import auto_repr
-from ...utils import find_files
-from ...consts import HANDLE_META_DIR
-from ...support.annexrepo import AnnexRepo
-from ...support.gitrepo import GitRepo
+from datalad.utils import auto_repr
+from datalad.utils import find_files
+from datalad_crawler.consts import HANDLE_META_DIR
+from datalad.support.annexrepo import AnnexRepo
+from datalad.support.gitrepo import GitRepo
 
 import logging
 lgr = logging.getLogger('datalad.crawler.dbs')

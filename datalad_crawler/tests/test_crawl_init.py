@@ -14,13 +14,13 @@ from datalad.tests.utils import known_failure_direct_mode
 
 from nose.tools import eq_, assert_raises, assert_in
 from mock import patch
-from ...api import crawl_init
+from datalad.api import crawl_init
 from collections import OrderedDict
 from os.path import exists
 from datalad.support.annexrepo import AnnexRepo
 from datalad.tests.utils import with_tempfile, chpwd
 from datalad.tests.utils import ok_clean_git
-from datalad.consts import CRAWLER_META_CONFIG_PATH, CRAWLER_META_DIR
+from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH, CRAWLER_META_DIR
 from datalad.distribution.dataset import Dataset
 
 
@@ -68,7 +68,7 @@ def test_crawl_init_error():
 def _test_crawl_init_error_patch(return_value, exc, exc_msg, d):
 
     ar = AnnexRepo(d, create=True)
-    with patch('datalad.interface.crawl_init.load_pipeline_from_template',
+    with patch('datalad_crawler.crawl_init.load_pipeline_from_template',
                return_value=lambda dataset: return_value) as cm:
         with chpwd(d):
             with assert_raises(exc) as cm2:

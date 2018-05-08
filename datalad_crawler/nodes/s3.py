@@ -24,13 +24,13 @@ from boto.s3.deletemarker import DeleteMarker
 import time
 
 from six import iteritems
-from ...utils import updated
-from ...dochelpers import exc_str
-from ...support.s3 import get_key_url
-from ...support.network import iso8601_to_epoch
-from ...downloaders.providers import Providers
-from ...downloaders.s3 import S3Downloader
-from ...downloaders.base import TargetFileAbsent
+from datalad.utils import updated
+from datalad.dochelpers import exc_str
+from datalad.support.s3 import get_key_url
+from datalad.support.network import iso8601_to_epoch
+from datalad.downloaders.providers import Providers
+from datalad.downloaders.s3 import S3Downloader
+from datalad.downloaders.base import TargetFileAbsent
 from ..dbs.versions import SingleVersionDB
 
 from logging import getLogger

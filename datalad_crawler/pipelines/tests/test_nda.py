@@ -7,12 +7,12 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from ....support.annexrepo import AnnexRepo
+from datalad.support.annexrepo import AnnexRepo
 
-from ....utils import chpwd
-from ....utils import swallow_logs
-from ....tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from ....tests.utils import with_tempfile
+from datalad.utils import chpwd
+from datalad.utils import swallow_logs
+from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils import with_tempfile
 
 from ..nda import pipeline, bucket_pipeline, collection_pipeline
 

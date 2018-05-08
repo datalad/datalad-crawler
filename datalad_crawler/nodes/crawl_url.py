@@ -12,10 +12,10 @@
 
 from os.path import splitext, dirname, basename
 
-from ...utils import updated
-from ...dochelpers import exc_str
-from ...downloaders.base import DownloadError, UnhandledRedirectError
-from ...downloaders.providers import Providers
+from datalad.utils import updated
+from datalad.dochelpers import exc_str
+from datalad.downloaders.base import DownloadError, UnhandledRedirectError
+from datalad.downloaders.providers import Providers
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.crawl_url')

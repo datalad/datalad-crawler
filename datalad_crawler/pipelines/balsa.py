@@ -25,10 +25,10 @@ from ..nodes.misc import assign, skip_if, find_files, continue_if
 from ..nodes.misc import debug
 from ..nodes.misc import sub, switch
 from ..nodes.annex import Annexificator
-from ...consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
-from ...utils import find_files as f_f, _path_
-from ...utils import auto_repr
-from ...utils import updated
+from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
+from datalad.utils import find_files as f_f, _path_
+from datalad.utils import auto_repr
+from datalad.utils import updated
 
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.balsa")

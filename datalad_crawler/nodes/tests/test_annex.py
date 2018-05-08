@@ -19,19 +19,19 @@ from mock import patch
 
 from ..annex import initiate_dataset
 from ..annex import Annexificator
-from ....tests.utils import assert_equal, assert_in
-from ....tests.utils import assert_raises
-from ....tests.utils import assert_true, assert_false
-from ....tests.utils import with_tree, serve_path_via_http
-from ....tests.utils import ok_file_under_git
-from ....tests.utils import ok_file_has_content
-from ....tests.utils import assert_cwd_unchanged
-from ....tests.utils import put_file_under_git
+from datalad.tests.utils import assert_equal, assert_in
+from datalad.tests.utils import assert_raises
+from datalad.tests.utils import assert_true, assert_false
+from datalad.tests.utils import with_tree, serve_path_via_http
+from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils import ok_file_has_content
+from datalad.tests.utils import assert_cwd_unchanged
+from datalad.tests.utils import put_file_under_git
 from ...pipeline import load_pipeline_from_config
-from ....consts import CRAWLER_META_CONFIG_PATH, DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
-from ....support.stats import ActivityStats
-from ....support.annexrepo import AnnexRepo
-from ....support.external_versions import external_versions
+from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH, DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from datalad.support.stats import ActivityStats
+from datalad.support.annexrepo import AnnexRepo
+from datalad.support.external_versions import external_versions
 
 
 @with_tempfile(mkdir=True)
@@ -343,7 +343,7 @@ def test_remove_other_versions(repo_path):
         rov = annex.remove_other_versions(db=version_db, **kwargs)  # generator
         with patch('os.unlink', new_callable=Unlinker) as cmunlink, \
                 patch('os.path.lexists', return_value=True),\
-                patch('datalad.crawler.nodes.annex.find_files', new_callable=cmunlink.Find_files):
+                patch('datalad_crawler.nodes.annex.find_files', new_callable=cmunlink.Find_files):
             out = list(rov(data))
         assert_equal(len(out), 1)
         eq_(out[0]['datalad_stats'].versions, [version])

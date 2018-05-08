@@ -18,22 +18,22 @@ from nose import SkipTest
 
 from datalad.support.external_versions import external_versions
 
-from ...api import crawl
+from datalad.api import crawl
 
-from ...tests.utils import assert_cwd_unchanged
-from ...tests.utils import assert_equal
-from ...tests.utils import with_tempfile
-from ...support.stats import ActivityStats
-from ...utils import chpwd
-from ...utils import getpwd
-from ...utils import find_files
-from ...utils import _path_
+from datalad.tests.utils import assert_cwd_unchanged
+from datalad.tests.utils import assert_equal
+from datalad.tests.utils import with_tempfile
+from datalad.support.stats import ActivityStats
+from datalad.utils import chpwd
+from datalad.utils import getpwd
+from datalad.utils import find_files
+from datalad.utils import _path_
 
 
 @assert_cwd_unchanged(ok_to_chdir=True)
 @patch('datalad.utils.chpwd')
-@patch('datalad.crawler.pipeline.load_pipeline_from_config', return_value=['pipeline'])
-@patch('datalad.crawler.pipeline.run_pipeline', return_value=None)
+@patch('datalad_crawler.pipeline.load_pipeline_from_config', return_value=['pipeline'])
+@patch('datalad_crawler.pipeline.run_pipeline', return_value=None)
 # Note that order of patched things as args is reverse for some reason :-/
 def test_crawl_api_chdir(run_pipeline_, load_pipeline_from_config_, chpwd_):
     output, stats = crawl('some_path_not_checked', chdir='somedir')
@@ -54,9 +54,9 @@ def test_crawl_api_chdir(run_pipeline_, load_pipeline_from_config_, chpwd_):
 @assert_cwd_unchanged(ok_to_chdir=True)
 @patch('datalad.utils.chpwd')
 @patch('datalad.utils.get_logfilename', return_value="some.log")
-@patch('datalad.crawler.pipeline.get_repo_pipeline_script_path', return_value='script_path')
-@patch('datalad.crawler.pipeline.load_pipeline_from_config', return_value=['pipeline'])
-@patch('datalad.crawler.pipeline.run_pipeline',
+@patch('datalad_crawler.pipeline.get_repo_pipeline_script_path', return_value='script_path')
+@patch('datalad_crawler.pipeline.load_pipeline_from_config', return_value=['pipeline'])
+@patch('datalad_crawler.pipeline.run_pipeline',
        side_effect=[
            [], [], [], [], Exception("crawling failed")
        ]

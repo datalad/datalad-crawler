@@ -16,7 +16,7 @@ from ..nodes.misc import continue_if
 from ..nodes.matches import a_href_match
 from ..nodes.s3 import crawl_s3
 from ..nodes.annex import Annexificator
-from ...consts import DATALAD_SPECIAL_REMOTE
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
 
 from datalad.support.nda_ import get_oracle_db
 from datalad.support.nda_ import image03_fields, image03_file_fields

@@ -17,23 +17,23 @@ from ...pipeline import run_pipeline, FinishPipeline
 
 from ...nodes.annex import Annexificator, initiate_dataset
 
-from ....support.stats import ActivityStats
-from ....support.gitrepo import GitRepo
+from datalad.support.stats import ActivityStats
+from datalad.support.gitrepo import GitRepo
 
-from ....utils import chpwd
-from ....tests.utils import with_tree
-from ....tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from ....tests.utils import assert_in, assert_not_in
-from ....tests.utils import skip_if_no_module
-from ....tests.utils import with_tempfile
-from ....tests.utils import serve_path_via_http
-from ....tests.utils import skip_if_no_network
-from ....tests.utils import use_cassette
-from ....tests.utils import ok_file_has_content
-from ....tests.utils import ok_file_under_git
-from ....distribution.dataset import Dataset
-from ....distribution.dataset import Dataset
-from ....consts import CRAWLER_META_CONFIG_PATH
+from datalad.utils import chpwd
+from datalad.tests.utils import with_tree
+from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils import assert_in, assert_not_in
+from datalad.tests.utils import skip_if_no_module
+from datalad.tests.utils import with_tempfile
+from datalad.tests.utils import serve_path_via_http
+from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils import use_cassette
+from datalad.tests.utils import ok_file_has_content
+from datalad.tests.utils import ok_file_under_git
+from datalad.distribution.dataset import Dataset
+from datalad.distribution.dataset import Dataset
+from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH
 
 from datalad.api import crawl
 from ..openfmri import superdataset_pipeline as ofcpipeline

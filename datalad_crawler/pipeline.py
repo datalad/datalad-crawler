@@ -53,16 +53,16 @@ from glob import glob
 from os.path import dirname, join as opj, isabs, exists, curdir, basename
 from os import makedirs
 
-from ..consts import CRAWLER_META_DIR, HANDLE_META_DIR, CRAWLER_META_CONFIG_PATH
-from ..consts import CRAWLER_META_CONFIG_FILENAME
-from ..utils import updated
-from ..utils import get_dataset_root
-from ..dochelpers import exc_str
-from ..support.gitrepo import GitRepo
-from ..support.network import parse_url_opts
-from ..support.stats import ActivityStats
-from ..support.exceptions import PipelineNotSpecifiedError
-from ..support.configparserinc import SafeConfigParserWithIncludes
+from datalad_crawler.consts import CRAWLER_META_DIR, HANDLE_META_DIR, CRAWLER_META_CONFIG_PATH
+from datalad_crawler.consts import CRAWLER_META_CONFIG_FILENAME
+from datalad.utils import updated
+from datalad.utils import get_dataset_root
+from datalad.dochelpers import exc_str
+from datalad.support.gitrepo import GitRepo
+from datalad.support.network import parse_url_opts
+from datalad.support.stats import ActivityStats
+from datalad.support.exceptions import PipelineNotSpecifiedError
+from datalad.support.configparserinc import SafeConfigParserWithIncludes
 
 from logging import getLogger
 lgr = getLogger('datalad.crawler.pipeline')
@@ -384,7 +384,7 @@ def load_pipeline_from_module(module, func=None, args=None, kwargs=None, return_
     args = args or tuple()
     kwargs = kwargs or {}
 
-    # mod = __import__('datalad.crawler.pipelines.%s' % module, fromlist=['datalad.crawler.pipelines'])
+    # mod = __import__('datalad_crawler.pipelines.%s' % module, fromlist=['datalad_crawler.pipelines'])
     dirname_ = dirname(module)
     assert(module.endswith('.py'))
     try:
@@ -392,8 +392,8 @@ def load_pipeline_from_module(module, func=None, args=None, kwargs=None, return_
         modname = basename(module)[:-3]
         # to allow for relative imports within "stock" pipelines
         if dirname_ == opj(dirname(__file__), 'pipelines'):
-            mod = __import__('datalad.crawler.pipelines.%s' % modname,
-                             fromlist=['datalad.crawler.pipelines'])
+            mod = __import__('datalad_crawler.pipelines.%s' % modname,
+                             fromlist=['datalad_crawler.pipelines'])
         else:
             mod = __import__(modname, level=0)
         if return_only:
@@ -436,7 +436,7 @@ def _find_pipeline(name):
 
 
 def load_pipeline_from_template(name, func=None, args=None, kwargs=None, return_only=False):
-    """Given a name, loads that pipeline from datalad.crawler.pipelines
+    """Given a name, loads that pipeline from datalad_crawler.pipelines
 
     and later from other locations
 

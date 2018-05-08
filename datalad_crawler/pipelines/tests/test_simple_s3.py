@@ -9,17 +9,17 @@
 
 from glob import glob
 
-from datalad.crawler.pipelines.tests.utils import _test_smoke_pipelines as _tsp
-from ....utils import chpwd
-from ....utils import _path_
-from ....tests.utils import eq_
-from ....tests.utils import assert_false
-from ....tests.utils import with_tempfile
-from ....tests.utils import use_cassette
-from ....tests.utils import externals_use_cassette
-from ....tests.utils import skip_if_no_network
-from ....tests.utils import ok_clean_git
-from ....tests.utils import ok_file_under_git
+from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines as _tsp
+from datalad.utils import chpwd
+from datalad.utils import _path_
+from datalad.tests.utils import eq_
+from datalad.tests.utils import assert_false
+from datalad.tests.utils import with_tempfile
+from datalad.tests.utils import use_cassette
+from datalad.tests.utils import externals_use_cassette
+from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils import ok_clean_git
+from datalad.tests.utils import ok_file_under_git
 from ..simple_s3 import pipeline
 from datalad.api import crawl_init
 from datalad.api import crawl

@@ -16,19 +16,19 @@ from ..s3 import get_key_url
 from ..misc import switch
 from ..annex import Annexificator
 from ...pipeline import run_pipeline
-from ....consts import DATALAD_SPECIAL_REMOTE
-from ....downloaders.tests.utils import get_test_providers
-from ....support.stats import ActivityStats
-from ....utils import swallow_logs
-from ....utils import rmtree
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
+from datalad.downloaders.tests.utils import get_test_providers
+from datalad.support.stats import ActivityStats
+from datalad.utils import swallow_logs
+from datalad.utils import rmtree
 
-from ....tests.utils import eq_
-from ....tests.utils import assert_not_equal
-from ....tests.utils import assert_in, assert_not_in
-from ....tests.utils import skip_if_no_network
-from ....tests.utils import use_cassette
-from ....tests.utils import externals_use_cassette
-from ....tests.utils import with_tempfile
+from datalad.tests.utils import eq_
+from datalad.tests.utils import assert_not_equal
+from datalad.tests.utils import assert_in, assert_not_in
+from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils import use_cassette
+from datalad.tests.utils import externals_use_cassette
+from datalad.tests.utils import with_tempfile
 
 
 def _annex(path):

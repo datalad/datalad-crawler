@@ -11,16 +11,16 @@
 __docformat__ = 'restructuredtext'
 
 from os.path import curdir
-from .base import Interface
+from datalad.interface.base import Interface
 from datalad.interface.base import build_doc
 from collections import OrderedDict
 from datalad.distribution.dataset import Dataset
 
-from ..dochelpers import exc_str
-from ..support.param import Parameter
-from ..support.constraints import EnsureStr, EnsureNone
-from ..utils import get_func_kwargs_doc
-from ..crawler.pipeline import load_pipeline_from_template, initiate_pipeline_config
+from datalad.dochelpers import exc_str
+from datalad.support.param import Parameter
+from datalad.support.constraints import EnsureStr, EnsureNone
+from datalad.utils import get_func_kwargs_doc
+from datalad_crawler.pipeline import load_pipeline_from_template, initiate_pipeline_config
 
 from logging import getLogger
 lgr = getLogger('datalad.api.crawl_init')

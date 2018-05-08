@@ -21,11 +21,11 @@ from six import iteritems, string_types
 
 from datalad.support.network import get_url_disposition_filename, get_url_straight_filename
 from datalad.utils import updated
-from ..pipeline import FinishPipeline
-from ..pipeline import xrun_pipeline
-from ..pipeline import PIPELINE_TYPES
-from ...utils import auto_repr
-from ...utils import find_files as _find_files
+from datalad_crawler.pipeline import FinishPipeline
+from datalad_crawler.pipeline import xrun_pipeline
+from datalad_crawler.pipeline import PIPELINE_TYPES
+from datalad.utils import auto_repr
+from datalad.utils import find_files as _find_files
 from datalad.support.network import URL
 
 from logging import getLogger

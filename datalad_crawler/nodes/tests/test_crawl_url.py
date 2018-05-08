@@ -20,10 +20,10 @@ from ..crawl_url import crawl_url
 from ..crawl_url import parse_checksums
 from ..matches import a_href_match
 from ...pipeline import run_pipeline
-from ....tests.utils import assert_equal
-from ....tests.utils import assert_false
-from ....tests.utils import SkipTest
-from ....utils import updated
+from datalad.tests.utils import assert_equal
+from datalad.tests.utils import assert_false
+from datalad.tests.utils import SkipTest
+from datalad.utils import updated
 
 pages_loop = dict(
     tree=(

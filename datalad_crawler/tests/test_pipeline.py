@@ -12,23 +12,23 @@ from os.path import join as opj
 from datalad.tests.utils import skip_if_scrapy_without_selector
 skip_if_scrapy_without_selector()
 
-from ..nodes.crawl_url import crawl_url
-from ..nodes.matches import *
-from ..pipeline import run_pipeline, FinishPipeline
+from datalad_crawler.nodes.crawl_url import crawl_url
+from datalad_crawler.nodes.matches import *
+from datalad_crawler.pipeline import run_pipeline, FinishPipeline
 
-from ..nodes.misc import Sink, assign, range_node, interrupt_if
-from ..nodes.annex import Annexificator
-from ..pipeline import load_pipeline_from_module
+from datalad_crawler.nodes.misc import Sink, assign, range_node, interrupt_if
+from datalad_crawler.nodes.annex import Annexificator
+from datalad_crawler.pipeline import load_pipeline_from_module
 
-from ...support.stats import ActivityStats
+from datalad.support.stats import ActivityStats
 
-from ...tests.utils import with_tree
-from ...tests.utils import eq_, ok_, assert_raises
-from ...tests.utils import assert_in
-from ...tests.utils import skip_if_no_module
-from ...tests.utils import with_tempfile
-from ...tests.utils import skip_if_no_network
-from ...tests.utils import use_cassette
+from datalad.tests.utils import with_tree
+from datalad.tests.utils import eq_, ok_, assert_raises
+from datalad.tests.utils import assert_in
+from datalad.tests.utils import skip_if_no_module
+from datalad.tests.utils import with_tempfile
+from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils import use_cassette
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')

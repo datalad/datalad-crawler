@@ -25,31 +25,31 @@ from six import iteritems
 from six import string_types
 from distutils.version import LooseVersion
 
-from ...version import __version__
-from ...api import add_archive_content
-from ...api import clean
-from ...utils import rmtree, updated
-from ...utils import lmtime
-from ...utils import find_files
-from ...utils import auto_repr
-from ...utils import try_multiple
-from ...utils import assure_list
+from datalad.version import __version__
+from datalad.api import add_archive_content
+from datalad.api import clean
+from datalad.utils import rmtree, updated
+from datalad.utils import lmtime
+from datalad.utils import find_files
+from datalad.utils import auto_repr
+from datalad.utils import try_multiple
+from datalad.utils import assure_list
 
-from ...downloaders.providers import Providers
-from ...api import create
-from ...support.gitrepo import GitRepo, _normalize_path
-from ...support.annexrepo import AnnexRepo
-from ...support.stats import ActivityStats
-from ...support.versions import get_versions
-from ...support.exceptions import AnnexBatchCommandError
-from ...support.network import get_url_straight_filename, get_url_disposition_filename
+from datalad.downloaders.providers import Providers
+from datalad.api import create
+from datalad.support.gitrepo import GitRepo, _normalize_path
+from datalad.support.annexrepo import AnnexRepo
+from datalad.support.stats import ActivityStats
+from datalad.support.versions import get_versions
+from datalad.support.exceptions import AnnexBatchCommandError
+from datalad.support.network import get_url_straight_filename, get_url_disposition_filename
 
-from ... import cfg
-from ...cmd import get_runner
+from datalad import cfg
+from datalad.cmd import get_runner
 
-from ..pipeline import initiate_pipeline_config
-from ..dbs.files import PhysicalFileStatusesDB, JsonFileStatusesDB
-from ..dbs.versions import SingleVersionDB
+from datalad_crawler.pipeline import initiate_pipeline_config
+from datalad_crawler.dbs.files import PhysicalFileStatusesDB, JsonFileStatusesDB
+from datalad_crawler.dbs.versions import SingleVersionDB
 from datalad.customremotes.base import init_datalad_remote
 from datalad.dochelpers import exc_str
 

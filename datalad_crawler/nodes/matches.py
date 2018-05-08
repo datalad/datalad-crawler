@@ -15,10 +15,10 @@ import types
 
 from six import PY3
 
-from ...utils import updated
-from ...support.network import dlurljoin
-from ...support.exceptions import MissingExternalDependency
-from ...utils import auto_repr
+from datalad.utils import updated
+from datalad.support.network import dlurljoin
+from datalad.support.exceptions import MissingExternalDependency
+from datalad.utils import auto_repr
 
 from logging import getLogger
 lgr = getLogger('datalad.crawler')

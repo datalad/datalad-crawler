@@ -15,8 +15,8 @@ from os.path import lexists, join as opj
 from ..nodes.misc import switch, assign, sub
 from ..nodes.s3 import crawl_s3
 from ..nodes.annex import Annexificator
-from ...consts import DATALAD_SPECIAL_REMOTE
-from ...support.strings import get_replacement_dict
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
+from datalad.support.strings import get_replacement_dict
 
 from .simple_with_archives import pipeline as swa_pipeline
 from datalad.utils import assure_bool

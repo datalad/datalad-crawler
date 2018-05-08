@@ -13,8 +13,8 @@
 from collections import OrderedDict
 from six import iteritems
 
-from ...utils import auto_repr
-from ...consts import CRAWLER_META_VERSIONS_DIR
+from datalad.utils import auto_repr
+from datalad_crawler.consts import CRAWLER_META_VERSIONS_DIR
 
 from .base import JsonBaseDB
 

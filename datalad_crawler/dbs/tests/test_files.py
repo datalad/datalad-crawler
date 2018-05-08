@@ -12,12 +12,12 @@ from os.path import join as opj, curdir, sep
 from os.path import realpath
 from ..files import PhysicalFileStatusesDB, JsonFileStatusesDB
 
-from ....tests.utils import with_tree
-from ....tests.utils import assert_equal
-from ....tests.utils import assert_false
-from ....tests.utils import assert_true
-from ....tests.utils import chpwd
-from ....support.annexrepo import AnnexRepo
+from datalad.tests.utils import with_tree
+from datalad.tests.utils import assert_equal
+from datalad.tests.utils import assert_false
+from datalad.tests.utils import assert_true
+from datalad.tests.utils import chpwd
+from datalad.support.annexrepo import AnnexRepo
 
 @with_tree(
     tree={'file1.txt': 'load1',

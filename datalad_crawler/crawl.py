@@ -12,19 +12,19 @@ __docformat__ = 'restructuredtext'
 
 
 from os.path import exists
-from .base import Interface
+from datalad.interface.base import Interface
 from datalad.interface.base import build_doc
 
 from datalad.support.param import Parameter
 from datalad.support.constraints import EnsureStr, EnsureNone
-from datalad.crawler.pipeline import initiate_pipeline_config
+from datalad_crawler.pipeline import initiate_pipeline_config
 from datalad.support.stats import ActivityStats
 from datalad import utils
 
 from logging import getLogger
 lgr = getLogger('datalad.api.crawl')
 
-from .. import cfg
+from datalad import cfg
 
 
 @build_doc
@@ -75,11 +75,11 @@ class Crawl(Interface):
                  recursive=False, chdir=None):  # dry_run=False,
         dry_run = False
 
-        from datalad.crawler.pipeline import (
+        from datalad_crawler.pipeline import (
             load_pipeline_from_config, load_pipeline_from_module,
             get_repo_pipeline_config_path, get_repo_pipeline_script_path
         )
-        from datalad.crawler.pipeline import run_pipeline
+        from datalad_crawler.pipeline import run_pipeline
         from datalad.utils import chpwd  # import late so we could mock during tests
 
         with chpwd(chdir):
@@ -143,10 +143,10 @@ class Crawl(Interface):
                 # get all subdatasets, and crawl them too!
                 ## ? assert path_orig is None, "Otherwise not sure what to do with path=%r in subdatasets" % path
                 import os
-                from ..distribution.dataset import Dataset
-                from ..api import crawl
-                from ..utils import swallow_logs
-                from ..dochelpers import exc_str
+                from datalad.distribution.dataset import Dataset
+                from datalad.api import crawl
+                from datalad.utils import swallow_logs
+                from datalad.dochelpers import exc_str
                 # Note: we could collect all datasets to be crawled here or pass recursive=True
                 # into the subdatasets' crawl.  We will collect all of them here so we might later
                 # also introduce automatic commits when super-dataset got successfully updated

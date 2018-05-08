@@ -13,12 +13,12 @@
 import os
 from os.path import join as opj, exists, lexists, islink, realpath, sep
 
-from ...dochelpers import exc_str
-from ...support.status import FileStatus
-from ...support.exceptions import CommandError
-from ...utils import auto_repr
-from ...utils import disable_logger
-from ...consts import CRAWLER_META_STATUSES_DIR
+from datalad.dochelpers import exc_str
+from datalad.support.status import FileStatus
+from datalad.support.exceptions import CommandError
+from datalad.utils import auto_repr
+from datalad.utils import disable_logger
+from datalad_crawler.consts import CRAWLER_META_STATUSES_DIR
 
 from .base import JsonBaseDB, FileStatusesBaseDB
 import logging

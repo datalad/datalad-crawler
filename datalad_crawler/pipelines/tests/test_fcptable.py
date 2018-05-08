@@ -11,15 +11,15 @@
 from os.path import exists
 from requests.exceptions import InvalidURL
 
-from ....utils import chpwd
-from ....dochelpers import exc_str
-from ....tests.utils import assert_true, assert_raises, assert_false
-from ....tests.utils import SkipTest
-from ....tests.utils import with_tempfile, skip_if_no_network, use_cassette
-from ....tests.utils import skip_if_url_is_not_available
-from datalad.crawler.pipelines.tests.utils import _test_smoke_pipelines
-from datalad.crawler.pipelines.fcptable import *
-from datalad.crawler.pipeline import run_pipeline
+from datalad.utils import chpwd
+from datalad.dochelpers import exc_str
+from datalad.tests.utils import assert_true, assert_raises, assert_false
+from datalad.tests.utils import SkipTest
+from datalad.tests.utils import with_tempfile, skip_if_no_network, use_cassette
+from datalad.tests.utils import skip_if_url_is_not_available
+from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
+from datalad_crawler.pipelines.fcptable import *
+from datalad_crawler.pipeline import run_pipeline
 
 
 import logging

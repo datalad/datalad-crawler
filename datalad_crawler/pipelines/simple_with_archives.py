@@ -19,8 +19,8 @@ from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.misc import skip_if
 from ..nodes.annex import Annexificator
-from ...consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
-from ...support.strings import get_replacement_dict
+from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from datalad.support.strings import get_replacement_dict
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation

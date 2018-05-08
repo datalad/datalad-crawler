@@ -33,8 +33,8 @@ from ..misc import debug
 from ..misc import Sink
 from ..misc import fix_url
 from ...pipeline import FinishPipeline
-from ....tests.utils import with_tree
-from ....utils import updated
+from datalad.tests.utils import with_tree
+from datalad.utils import updated
 from ...tests.test_pipeline import _out
 from datalad.tests.utils import skip_if_no_network
 from datalad.tests.utils import use_cassette
@@ -59,7 +59,7 @@ from nose import SkipTest
 #@use_cassette('brain-map.org-1', return_body='')
 def test_get_disposition_filename():
     input = {'url': 'http://human.brain-map.org/api/v2/well_known_file_download/157722290'}
-    with patch('datalad.crawler.nodes.misc.get_url_disposition_filename',
+    with patch('datalad_crawler.nodes.misc.get_url_disposition_filename',
                return_value="T1.nii.gz"):
         output = list(get_disposition_filename(input))
     eq_(len(output), 1)

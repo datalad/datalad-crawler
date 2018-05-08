@@ -7,12 +7,12 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from ....support.annexrepo import AnnexRepo
+from datalad.support.annexrepo import AnnexRepo
 
-from ....utils import chpwd
-from ....utils import swallow_logs
-from ....tests.utils import ok_
-from ....utils import make_tempfile
+from datalad.utils import chpwd
+from datalad.utils import swallow_logs
+from datalad.tests.utils import ok_
+from datalad.utils import make_tempfile
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
