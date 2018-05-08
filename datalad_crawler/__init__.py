@@ -29,3 +29,6 @@ command_suite = (
         ),
     ]
 )
+
+from datalad import setup_package
+from datalad import teardown_package
