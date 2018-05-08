@@ -21,7 +21,7 @@ command_suite = (
         ),
         (
             # importable module that contains the command implementation
-            'datalad_crawler.crawli_init',
+            'datalad_crawler.crawl_init',
             # name of the command class implementation in above module
             'CrawlInit',
             'crawl-init',

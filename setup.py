@@ -60,6 +60,7 @@ setup(
     # datalad command suite specs from here
     install_requires=[
         'datalad>=0.10.0.rc1',
+        'scrapy>=1.1.0rc3',  # versioning is primarily for python3 support
     ],
     extras_require={
         'devel-docs': [

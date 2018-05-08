@@ -6,8 +6,9 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+"""Crawling of external resources (e.g. websites) to get/update datasets
 
-from datalad.tests.utils import skip_if_no_module
-skip_if_no_module('scrapy')
-from datalad.tests.utils import skip_if_scrapy_without_selector
-skip_if_scrapy_without_selector()
+"""
+
+__docformat__ = 'restructuredtext'
+
