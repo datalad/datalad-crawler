@@ -11,9 +11,21 @@ This module reference extends the manual with a comprehensive overview of the
 available functionality.  Each module in the package is documented by a general
 summary of its purpose and the list of classes and functions it provides.
 
-..
-  .. currentmodule:: datalad_crawler
-  .. autosummary::
+Commands
+========
+
+.. currentmodule:: datalad_crawler
+.. autosummary::
      :toctree: generated
+
      crawl
      crawl_init
+
+Pipelines
+=========
+
+.. currentmodule:: datalad_crawler
+.. autosummary::
+     :toctree: generated
+
+     pipeline

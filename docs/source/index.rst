@@ -6,9 +6,29 @@ DataLad extension crawling web resources and automated data distributions
 
    changelog
    acknowledgements
+   basics
 
-API
-===
+Demo
+====
+
+.. toctree::
+   :maxdepth: 1
+
+   demos/track_data_from_webpage
+
+
+Command line reference
+======================
+
+.. toctree::
+   :maxdepth: 1
+
+   generated/man/datalad-crawl
+   generated/man/datalad-crawl-init
+
+
+Python API
+==========
 
 .. toctree::
    :maxdepth: 1
