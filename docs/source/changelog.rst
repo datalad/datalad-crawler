@@ -16,7 +16,7 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
-0.1 (May 09, 2018) -- The Release
+0.1 (May 11, 2018) -- The Release
 ---------------------------------
 
 -  First release as a DataLad extension. Functionality remains identical
