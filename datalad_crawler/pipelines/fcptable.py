@@ -8,18 +8,16 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A pipeline for crawling FCP Classic Data Table"""
 
-import os, re
+import os
+import re
 from os.path import lexists
 
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.matches import xpath_match, a_href_match
 from ..nodes.misc import assign, skip_if, sub
-from ..nodes.misc import assign, continue_if
 from ..nodes.misc import switch
-from ..nodes.misc import get_disposition_filename
 from ..nodes.misc import find_files
-from ..nodes.misc import debug
 from ..nodes.annex import Annexificator
 from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE
 from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE

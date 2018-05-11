@@ -13,7 +13,6 @@
 from ..nodes.misc import assign
 from ..nodes.misc import switch
 from ..nodes.misc import continue_if
-from ..nodes.matches import a_href_match
 from ..nodes.s3 import crawl_s3
 from ..nodes.annex import Annexificator
 from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE

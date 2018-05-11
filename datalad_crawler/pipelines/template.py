@@ -8,21 +8,18 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A template (non-functional) for crawler pipelines"""
 
-# Import necessary nodes
-from ..nodes.crawl_url import crawl_url
-
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.template")
+
 
 # define a pipeline generator as a function accepting necessary keyword arguments
 # Should have no strictly positional arguments
 def pipeline(
         # e.g. could be listed as explicit keyword arguments
         #url="http://example.com", depth=2, ...
-        **kwargs
-    ):
+        **kwargs):
     lgr.info("Creating a pipeline with kwargs %s" % str(kwargs))
     # Should return a list representing a pipeline
     return []

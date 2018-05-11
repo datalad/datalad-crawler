@@ -71,7 +71,6 @@ class SingleVersionDB(JsonBaseDB):
         self._db['version'] = v
         self.save()
 
-
     @property
     def versions(self):
         return self._db['versions']

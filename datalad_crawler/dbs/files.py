@@ -11,7 +11,7 @@
 """
 
 import os
-from os.path import join as opj, exists, lexists, islink, realpath, sep
+from os.path import exists, lexists, islink, realpath, sep
 
 from datalad.dochelpers import exc_str
 from datalad.support.status import FileStatus

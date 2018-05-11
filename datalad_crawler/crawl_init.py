@@ -20,7 +20,8 @@ from datalad.dochelpers import exc_str
 from datalad.support.param import Parameter
 from datalad.support.constraints import EnsureStr, EnsureNone
 from datalad.utils import get_func_kwargs_doc
-from datalad_crawler.pipeline import load_pipeline_from_template, initiate_pipeline_config
+from datalad_crawler.pipeline import load_pipeline_from_template
+from datalad_crawler.pipeline import initiate_pipeline_config
 
 from logging import getLogger
 lgr = getLogger('datalad.api.crawl_init')

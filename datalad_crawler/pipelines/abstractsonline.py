@@ -12,6 +12,7 @@ from ..nodes.crawl_url import crawl_url
 from ..nodes.matches import a_href_match, xpath_match
 from ..nodes.misc import Sink
 
+
 # TODO: migrate to stock nodes package/module. make an io module probably
 class dump_csv(object):
     """IO node to dump collected data as a csv"""

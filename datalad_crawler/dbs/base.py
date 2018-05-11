@@ -12,7 +12,7 @@
 
 import os
 import json
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from six import add_metaclass
 
 from os.path import join as opj, exists, lexists, realpath, basename, dirname
@@ -22,8 +22,6 @@ from os.path import isabs
 from datalad.utils import auto_repr
 from datalad.utils import find_files
 from datalad_crawler.consts import HANDLE_META_DIR
-from datalad.support.annexrepo import AnnexRepo
-from datalad.support.gitrepo import GitRepo
 
 import logging
 lgr = logging.getLogger('datalad.crawler.dbs')
@@ -173,7 +171,6 @@ class FileStatusesBaseDB(object):
 
     def _get(self, filepath):
         raise NotImplementedError("must be defined in subclasses")
-
 
     def set(self, fpath, status=None):
         """Set a new status for the fpath. If status is None, get from available file

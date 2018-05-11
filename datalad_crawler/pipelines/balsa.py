@@ -14,15 +14,14 @@ import os
 import re
 
 from shutil import rmtree
-from os import curdir, makedirs, rmdir
-from os.path import lexists, join as opj, abspath, exists, normpath
+from os import curdir, makedirs
+from os.path import join as opj, abspath, exists, normpath
 from collections import OrderedDict
 
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.matches import xpath_match, a_href_match
-from ..nodes.misc import assign, skip_if, find_files, continue_if
-from ..nodes.misc import debug
+from ..nodes.misc import assign, skip_if, find_files
 from ..nodes.misc import sub, switch
 from ..nodes.annex import Annexificator
 from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE

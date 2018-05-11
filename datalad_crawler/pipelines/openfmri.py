@@ -9,28 +9,22 @@
 """A pipeline for crawling openfmri dataset"""
 
 import os
-import re
 from os.path import lexists
 
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
-from ..nodes.matches import css_match, a_href_match
+from ..nodes.matches import a_href_match
 from ..nodes.misc import assign
 from ..nodes.misc import sub
 from ..nodes.misc import switch
 from ..nodes.misc import func_to_node
 from ..nodes.misc import find_files
-from ..nodes.misc import skip_if
-from ..nodes.misc import debug
 from ..nodes.misc import fix_permissions
 from ..nodes.annex import Annexificator
 from datalad.support.s3 import get_versioned_url
-from datalad.utils import updated
-from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
-from datalad.downloaders.providers import Providers
+from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE
 
 # For S3 crawling
-from ..nodes.s3 import crawl_s3
 from .openfmri_s3 import pipeline as s3_pipeline
 from datalad.api import ls
 from datalad.dochelpers import exc_str

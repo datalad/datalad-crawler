@@ -8,8 +8,7 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A pipeline for crawling openfmri s3 bucket"""
 
-import os
-from os.path import lexists, join as opj
+from os.path import join as opj
 
 # Import necessary nodes
 from ..nodes.misc import switch, assign, sub

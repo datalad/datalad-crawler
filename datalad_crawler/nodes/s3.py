@@ -10,20 +10,12 @@
 """
 
 import re
-from distutils.version import LooseVersion
-
-import os
-from os import unlink
-from os.path import splitext, dirname, basename, curdir
-from os.path import lexists
-from os.path import join as opj
 
 from boto.s3.key import Key
 from boto.s3.prefix import Prefix
 from boto.s3.deletemarker import DeleteMarker
 import time
 
-from six import iteritems
 from datalad.utils import updated
 from datalad.dochelpers import exc_str
 from datalad.support.s3 import get_key_url
