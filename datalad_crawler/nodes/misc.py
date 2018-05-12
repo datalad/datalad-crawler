@@ -19,7 +19,8 @@ from stat import ST_MODE, S_IEXEC, S_IXOTH, S_IXGRP
 from os.path import curdir, isdir, isabs, exists, join as opj, split as ops
 from six import iteritems, string_types
 
-from datalad.support.network import get_url_disposition_filename, get_url_straight_filename
+from datalad.support.network import get_url_disposition_filename
+from datalad.support.network import get_url_straight_filename
 from datalad.utils import updated
 from datalad_crawler.pipeline import FinishPipeline
 from datalad_crawler.pipeline import xrun_pipeline
@@ -29,16 +30,15 @@ from datalad.utils import find_files as _find_files
 from datalad.support.network import URL
 
 from logging import getLogger
-from nose.tools import eq_, assert_raises
 
 lgr = getLogger('datalad.crawler.nodes')
+
 
 @auto_repr
 class fix_permissions(object):
     """A node used to check the permissions of a file and set the executable bit
 
     """
-
     def __init__(self, file_re='.*', executable=False, input='filename', path=None):
         """
             Parameters

@@ -9,15 +9,11 @@
 """A pipeline for crawling a crcns dataset"""
 
 # Import necessary nodes
-import os
 from ..nodes.crawl_url import crawl_url
 from ..nodes.misc import fix_url
-from ..nodes.crawl_url import parse_checksums
-from ..nodes.matches import css_match, a_href_match
-from ..nodes.misc import assign
+from ..nodes.matches import a_href_match
 from ..nodes.misc import find_files
 from ..nodes.misc import sub
-from ..nodes.misc import skip_if
 from ..nodes.annex import Annexificator
 from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.strings import get_replacement_dict

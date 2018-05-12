@@ -42,13 +42,15 @@ from datalad.support.annexrepo import AnnexRepo
 from datalad.support.stats import ActivityStats
 from datalad.support.versions import get_versions
 from datalad.support.exceptions import AnnexBatchCommandError
-from datalad.support.network import get_url_straight_filename, get_url_disposition_filename
+from datalad.support.network import get_url_straight_filename
+from datalad.support.network import get_url_disposition_filename
 
 from datalad import cfg
 from datalad.cmd import get_runner
 
 from datalad_crawler.pipeline import initiate_pipeline_config
-from datalad_crawler.dbs.files import PhysicalFileStatusesDB, JsonFileStatusesDB
+from datalad_crawler.dbs.files import PhysicalFileStatusesDB
+from datalad_crawler.dbs.files import JsonFileStatusesDB
 from datalad_crawler.dbs.versions import SingleVersionDB
 from datalad.customremotes.base import init_datalad_remote
 from datalad.dochelpers import exc_str

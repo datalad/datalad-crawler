@@ -8,14 +8,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A pipeline for crawling openfmri s3 bucket"""
 
-import os
-from os.path import lexists
 
 # Import necessary nodes
 from ..nodes.misc import switch, assign, sub
 from ..nodes.s3 import crawl_s3
 from ..nodes.annex import Annexificator
-from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation

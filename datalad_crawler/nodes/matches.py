@@ -28,6 +28,7 @@ try:
     from scrapy.selector import Selector
 except ImportError:  # pragma: no cover
     lgr.debug("Failed to import Selector from scrapy, so matches would not be functional")
+
     class Selector(object):
         xpath = css = None
     Response = None
@@ -39,7 +40,6 @@ except ImportError:  # pragma: no cover
 class ExtractorMatch(object):
     """Generic matching extractor
     """
-
     def __init__(self, query, input='response', output='match', pop_input=False,
                  allow_multiple=False, xpaths=None, csss=None, min_count=None,
                  max_count=None):
