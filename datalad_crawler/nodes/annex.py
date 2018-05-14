@@ -684,7 +684,7 @@ class Annexificator(object):
 
         return fpath
 
-    def switch_branch(self, branch, parent=None, must_exist=None, allow_remote=True):
+    def switch_branch(self, branch, parent='master', must_exist=None, allow_remote=True):
         """Node generator to switch branches, returns actual node
 
         Parameters
