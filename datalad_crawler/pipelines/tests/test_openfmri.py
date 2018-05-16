@@ -308,15 +308,16 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 3)
-    eq_(len(commits_l['incoming']), 3)
-    eq_(len(commits['incoming-processed']), 6)
-    eq_(len(commits_l['incoming-processed']), 4)  # because original merge has only 1 parent - incoming
+    eq_(len(commits['incoming']), 6)
+    eq_(len(commits_l['incoming']), 6)
+    eq_(len(commits['incoming-processed']), 9)
+    eq_(len(commits_l['incoming-processed']), 6)
     # all commits out there:
     # backend set, dataset init, crawler init
     # + 3*(incoming, processed, merge)
     # + 3*aggregate-metadata update + 2*remove of obsolete metadata object files
-    eq_(len(commits['master']), 17)
+    #   - 1 since now that incoming starts with master, there is one less merge
+    eq_(len(commits['master']), 16)
     eq_(len(commits_l['master']), 11)
 
     # Check tags for the versions
@@ -336,7 +337,8 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # Verify that we have desired tree of merges
     eq_(hexsha(commits_l['incoming-processed'][0].parents), (commits_l['incoming-processed'][1].hexsha,
                                                              commits_l['incoming'][0].hexsha))
-    eq_(hexsha(commits_l['incoming-processed'][2].parents), (commits_l['incoming'][2].hexsha,))
+    eq_(hexsha(commits_l['incoming-processed'][2].parents), (commits_l['incoming-processed'][3].hexsha,  # also in master
+                                                             commits_l['incoming'][2].hexsha,))
 
     # ben: The following two comparisons are targeting these commits:
     # commit "Merge branch 'incoming-processed'\n" in commits_l['master'],
@@ -370,6 +372,10 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     }
     target_incoming_files = {
         '.gitattributes',  # we marked default backend right in the incoming
+        # we now base 'incoming' on master branch, so we get all those as well
+        '.datalad/.gitattributes',
+        '.datalad/config',
+        '.datalad/crawl/crawl.cfg',
         'changelog.txt',
         'ds666.tar.gz',
         'ds666-beh_R1.0.1.tar.gz', 'ds666_R1.0.0.tar.gz', 'ds666_R1.0.1.tar.gz', 'ds666_R2.0.0.tar.gz',
@@ -531,16 +537,15 @@ def test_openfmri_pipeline2(ind, topurl, outd):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 1)
-    eq_(len(commits_l['incoming']), 1)
-    eq_(len(commits['incoming-processed']), 2)
-    eq_(len(commits_l['incoming-processed']), 2)  # because original merge has only 1 parent - incoming
-    # to avoid 'dataset init' commit create() needs save=False
+    eq_(len(commits['incoming']), 4)
+    eq_(len(commits_l['incoming']), 4)
+    eq_(len(commits['incoming-processed']), 5)
+    eq_(len(commits_l['incoming-processed']), 4)
 
     # all commits out there:
-    # backend set, dataset init, crawler, init, incoming, incoming-processed,
-    # merge, aggregate metadata:
-    eq_(len(commits['master']), 7)
+    # backend set, dataset init, crawler, init, incoming (shares with master -1),
+    # incoming-processed, merge, aggregate metadata:
+    eq_(len(commits['master']), 6)
     # backend set, dataset init, init, merge, aggregate metadata:
     eq_(len(commits_l['master']), 5)
 

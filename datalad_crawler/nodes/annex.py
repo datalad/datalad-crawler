@@ -693,7 +693,8 @@ class Annexificator(object):
           Name of the branch
         parent : str or None, optional
           If parent is provided, it will serve as a parent of the branch. If None,
-          detached new branch will be created
+          detached new branch will be created.  By default we now base all
+          other branches on "master" since it would be the most common use-case
         must_exist : bool or None, optional
           If None, doesn't matter.  If True, would fail if branch does not exist.  If
           False, would fail if branch already exists
