@@ -221,14 +221,16 @@ def test_balsa_pipeline1(ind, topurl, outd, clonedir):
     # Inspect the tree -- that we have all the branches
     branches = {'master', 'incoming', 'incoming-processed', 'git-annex'}
     eq_(set(repo.get_branches()), branches)
-    assert_not_equal(repo.get_hexsha('master'), repo.get_hexsha('incoming-processed'))
-    # and that one is different from incoming
+    # since now we base incoming on master -- and there were nothing custom
+    # in master after incoming-processed, both branches should be the same
+    eq_(repo.get_hexsha('master'), repo.get_hexsha('incoming-processed'))
+    # but that one is different from incoming
     assert_not_equal(repo.get_hexsha('incoming'), repo.get_hexsha('incoming-processed'))
 
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
-    eq_(len(commits['incoming']), 1)
-    eq_(len(commits['incoming-processed']), 2)
-    eq_(len(commits['master']), 6)  # all commits out there -- init ds + init crawler + 1*(incoming, processed, merge)
+    eq_(len(commits['incoming']), 1 + 3)  # +3 since now we base on master
+    eq_(len(commits['incoming-processed']), 2 + 3)
+    eq_(len(commits['master']), 5)  # all commits out there -- init ds + init crawler + 1*(incoming, processed)
 
     with chpwd(outd):
         eq_(set(glob('*')), {'dir1', 'file1.nii'})
