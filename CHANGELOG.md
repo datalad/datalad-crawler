@@ -13,3 +13,6 @@ repository](http://github.com/datalad/datalad-crawler) for more details.
 
 - First release as a DataLad extension. Functionality remains identical
   to DataLad 0.10.0.rc2
+- All non-master branches in the pipelines now will initiate from master
+  branch, not detached.  That should allow to inherit .gitattributes
+  settings of the entire dataset
