@@ -27,7 +27,8 @@ class crawl_url(object):
 
     """
     def __init__(self,
-                 url=None, matchers=None,
+                 url=None,
+                 matchers=None,
                  input='url',
                  failed=None,
                  cache_redirects=True,

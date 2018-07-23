@@ -6,12 +6,27 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""A pipeline for crawling a crcns dataset"""
+"""A pipeline for crawling basic websites and annexing their content
+
+It features:
+- extraction of content from archives (see `a_href_match_` option)
+- establishing 3-branch workflow with following branches:
+  - incoming - where all content is downloaded as is
+  - incoming-processed - where archives (if present) are extracted
+    (automatically) based on the content of incoming branch
+  - master - where incoming-processed is merged, so you could introduce
+    your additions/changes/fixups to files so they would later be automatically
+    merged with changes from the web which would propagate via
+    incoming-processed branch
+"""
 
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.misc import fix_url
-from ..nodes.matches import a_href_match
+from ..nodes.matches import (
+    a_href_match,
+    a_text_match,
+)
 from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.annex import Annexificator
@@ -21,12 +36,15 @@ from datalad.support.strings import get_replacement_dict
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
-lgr = getLogger("datalad.crawler.pipelines.kaggle")
+lgr = getLogger("datalad.crawler.pipelines.simple_with_archives")
 
 
 def pipeline(url=None,
              a_href_match_='.*/download/.*\.(tgz|tar.*|zip)',
-             tarballs=True,
+             a_href_match_follow=None,
+             a_text_match_follow=None,
+             tarballs=None,
+             fail_if_no_archives=True,
              datalad_downloader=False,
              use_current_dir=False,
              leading_dirs_depth=1,
@@ -35,13 +53,39 @@ def pipeline(url=None,
              add_archive_leading_dir=False,
              annex=None,
              add_annex_to_incoming_pipeline=False,
-             incoming_pipeline=None):
+             incoming_pipeline=None,
+             archives_regex="\.(zip|tgz|tar(\..+)?)$"):
     """Pipeline to crawl/annex a simple web page with some tarballs on it
     
     If .gitattributes file in the repository already provides largefiles
     setting, none would be provided here to calls to git-annex.  But if not -- 
     README* and LICENSE* files will be added to git, while the rest to annex
+
+    Parameters
+    ----------
+    url : str
+      Top URL to crawl
+    a_href_match_: str, optional
+      Regular expression for HTML A href option to match to signal which files
+      to download
+    a_href_match_follow: str, optional
+      Regular expression for HTML A href option to follow/recurse into to look
+      for more URLs
+    a_text_match_follow: str, optional
+      Regular expression for HTML A text content to follow/recurse into to look
+      for more URLs
+    tarballs: bool, optional
+      old, use `fail_if_no_archives`
+    fail_if_no_archives: bool, optional
+      Fail if no archives were found
+    archives_regex: str, optional
+      Regular expression to define what files are archives and should be
+      extracted
     """
+
+    if tarballs is not None:
+        # compatibility
+        fail_if_no_archives = tarballs
 
     if not isinstance(leading_dirs_depth, int):
         leading_dirs_depth = int(leading_dirs_depth)
@@ -64,7 +108,15 @@ def pipeline(url=None,
 
     if url:
         assert not incoming_pipeline
-        crawler = crawl_url(url)
+
+        follow_matchers = []
+        if a_href_match_follow:
+            follow_matchers.append(a_href_match(a_href_match_follow))
+        if a_text_match_follow:
+            follow_matchers.append(a_text_match(a_text_match_follow))
+
+        crawler = crawl_url(url, matchers=follow_matchers)
+
         incoming_pipeline = [ # Download all the archives found on the project page
             crawler,
             a_href_match(a_href_match_, min_count=1),
@@ -81,6 +133,7 @@ def pipeline(url=None,
 
 
     # TODO: we could just extract archives processing setup into a separate pipeline template
+
     return [
         annex.switch_branch('incoming', parent='master'),
         [
@@ -90,7 +143,7 @@ def pipeline(url=None,
         [   # nested pipeline so we could skip it entirely if nothing new to be merged
             annex.merge_branch('incoming', strategy='theirs', commit=False),  #, skip_no_changes=False),
             [   # Pipeline to augment content of the incoming and commit it to master
-                find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
+                find_files(archives_regex, fail_if_none=fail_if_no_archives),  # So we fail if none found -- there must be some! ;)),
                 annex.add_archive_content(
                     existing='archive-suffix',
                     # Since inconsistent and seems in many cases no leading dirs to strip, keep them as provided
