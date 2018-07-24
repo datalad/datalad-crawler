@@ -85,7 +85,7 @@ def check_basic_xnat_interface(url, project, empty_project, subjects):
         assert empty_project not in projects
     projects_public = nitrc.get_projects(limit='public')
     import json
-    print json.dumps(projects_public, indent=2)
+    print(json.dumps(projects_public, indent=2))
     assert len(projects_public) <= len(projects)
     assert not set(projects_public).difference(projects)
     eq_(set(projects),
@@ -132,7 +132,7 @@ def test_smoke_pipelines(d):
     with chpwd(d):
         with swallow_logs():
             for p in [superdataset_pipeline(NITRC_IR)]:
-                print p
+                print(p)
                 ok_(len(p) > 1)
 
 
