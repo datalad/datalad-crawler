@@ -90,18 +90,19 @@ PIPELINE_OPTS = dict(
 PIPELINE_TYPES = (list, tuple)
 
 
-def reset_pipeline(pipeline):
-    """Given a pipeline, traverse its nodes and call .reset on them
+def _call_recursively(pipeline, method_name):
+    """Given a pipeline, traverse its nodes and call their method
 
-    Note: it doesn't try to call reset if a node doesn't have it
+    Note: it doesn't try to call method if a node doesn't have it
     """
     if pipeline:
         for node in pipeline:
+            method = getattr(node, method_name, None)
             if isinstance(node, PIPELINE_TYPES):
-                reset_pipeline(node)
-            elif hasattr(node, '__call__') and hasattr(node, 'reset'):
-                lgr.log(2, "Resetting node %s" % node)
-                node.reset()
+                _call_recursively(node, method_name)
+            elif method and hasattr(node, '__call__'):
+                lgr.log(2, "Calling %s of node %s", method_name, node)
+                method()
 
 
 def run_pipeline(*args, **kwargs):
@@ -136,7 +137,7 @@ def _get_pipeline_opts(pipeline):
     return opts, pipeline
 
 
-def xrun_pipeline(pipeline, data=None, stats=None, reset=True):
+def xrun_pipeline(pipeline, data=None, stats=None, reset=True, finalize=True):
     """Yield results from the pipeline.
 
     """
@@ -150,7 +151,7 @@ def xrun_pipeline(pipeline, data=None, stats=None, reset=True):
 
     if reset:
         _log("Resetting pipeline")
-        reset_pipeline(pipeline)
+        _call_recursively(pipeline, 'reset')
 
     # just for paranoids and PEP8-disturbed, since theoretically every node
     # should not change the data, so having default {} should be sufficient
@@ -209,6 +210,9 @@ def xrun_pipeline(pipeline, data=None, stats=None, reset=True):
             # or all subsequent or may be go back and only skip that generated result
             _log("got a signal that pipeline is 'finished'")
 
+    if finalize:
+        _log("Finalizing pipeline")
+        _call_recursively(pipeline, 'finalize')
     # TODO: this implementation is somewhat bad since all the output logic is
     # duplicated within xrun_pipeline_steps, but it is probably unavoidable because of
     # loop option

@@ -91,3 +91,43 @@ def test_crawl_autoaddtext(ind, topurl, outd):
     ok_file_under_git(outd, "anothertext", annexed=False)
     ok_file_under_git(outd, "d/textfile", annexed=False)
     ok_file_under_git(outd, "d/tooshort", annexed=True)
+
+
+@with_tree(tree={
+    'index.html': """<html><body>
+    <a href="d1/">sub1</a>
+    <a href="d2/">sub2</a>
+</body></html>
+""",
+    'd1': {
+        '1.dat': ''
+    },
+    'd2': {
+        '2.dat': 'text'
+}})
+@serve_path_via_http
+@with_tempfile
+@known_failure_direct_mode  #FIXME
+def test_recurse_follow(ind, topurl, outd):
+    ds = create(outd, text_no_annex=True)
+    def crawl_init_(**kw):
+        return crawl_init(
+            dict(url=topurl, a_href_match_='.*\.dat', fail_if_no_archives=False, **kw)
+            , save=True
+            , template='simple_with_archives'
+            )
+
+    with chpwd(outd):  # TODO -- dataset argument
+        crawl_init_()
+        # nothing is matched so it would  blow somehow
+        with assert_raises(Exception):
+            crawl()
+
+        crawl_init_(a_href_follow='.*/d[1]/?')
+        crawl()
+
+    ok_clean_git(outd)
+    ok_file_under_git(outd, "d1/1.dat", annexed=True)
+    #ok_file_under_git(outd, "d/textfile", annexed=False)
+    #ok_file_under_git(outd, "d/tooshort", annexed=True)
+

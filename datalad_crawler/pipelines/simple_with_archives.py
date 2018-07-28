@@ -30,6 +30,7 @@ from ..nodes.matches import (
 from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.annex import Annexificator
+from datalad.utils import assure_bool
 from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.strings import get_replacement_dict
 
@@ -40,21 +41,28 @@ lgr = getLogger("datalad.crawler.pipelines.simple_with_archives")
 
 
 def pipeline(url=None,
+             # parameters for initial crawling
              a_href_match_='.*/download/.*\.(tgz|tar.*|zip)',
-             a_href_match_follow=None,
-             a_text_match_follow=None,
-             tarballs=None,
+             a_href_follow=None,
+             a_text_follow=None,
+             rename=None,
+             # how do we establish the path while crawling following the links
+             path_buildup=None,  # 'relurl' - relative to initial url,  ?'a_text' - could construct from the "navigation bread crumbs"
+             # working with tarballs:
+             tarballs=None,  # deprecated
              fail_if_no_archives=True,
-             datalad_downloader=False,
+             add_archive_leading_dir=False,
              use_current_dir=False,
              leading_dirs_depth=1,
-             rename=None,
-             backend='MD5E',
-             add_archive_leading_dir=False,
+             archives_regex="\.(zip|tgz|tar(\..+)?)$",
+             # heavy customizations so this could be used from other pipelines
+             datalad_downloader=False,
              annex=None,
              add_annex_to_incoming_pipeline=False,
              incoming_pipeline=None,
-             archives_regex="\.(zip|tgz|tar(\..+)?)$"):
+             # Additional repo specs
+             backend='MD5E'
+):
     """Pipeline to crawl/annex a simple web page with some tarballs on it
     
     If .gitattributes file in the repository already provides largefiles
@@ -68,10 +76,10 @@ def pipeline(url=None,
     a_href_match_: str, optional
       Regular expression for HTML A href option to match to signal which files
       to download
-    a_href_match_follow: str, optional
+    a_href_follow: str, optional
       Regular expression for HTML A href option to follow/recurse into to look
       for more URLs
-    a_text_match_follow: str, optional
+    a_text_follow: str, optional
       Regular expression for HTML A text content to follow/recurse into to look
       for more URLs
     tarballs: bool, optional
@@ -81,11 +89,16 @@ def pipeline(url=None,
     archives_regex: str, optional
       Regular expression to define what files are archives and should be
       extracted
+    path_buildup: (None, 'relpath')
+      If not None, directs how to establish a path for the file out of url.
+      `relpath` - relative to the initial url
     """
 
     if tarballs is not None:
         # compatibility
         fail_if_no_archives = tarballs
+    # This is messy and non-uniform ATM :-/ TODO: use constraints etc for typing of options?
+    fail_if_no_archives = assure_bool(fail_if_no_archives)
 
     if not isinstance(leading_dirs_depth, int):
         leading_dirs_depth = int(leading_dirs_depth)
@@ -110,18 +123,24 @@ def pipeline(url=None,
         assert not incoming_pipeline
 
         follow_matchers = []
-        if a_href_match_follow:
-            follow_matchers.append(a_href_match(a_href_match_follow))
-        if a_text_match_follow:
-            follow_matchers.append(a_text_match(a_text_match_follow))
+        if a_href_follow:
+            follow_matchers.append(a_href_match(a_href_follow))
+        if a_text_follow:
+            follow_matchers.append(a_text_match(a_text_follow))
 
         crawler = crawl_url(url, matchers=follow_matchers)
 
+        from datalad_crawler.nodes.misc import debug
         incoming_pipeline = [ # Download all the archives found on the project page
             crawler,
-            a_href_match(a_href_match_, min_count=1),
-            fix_url,
+            a_href_match(a_href_match_, min_count=1, finalize_each=False),
+            debug(fix_url),
         ]
+        if path_buildup == 'relpath':
+            incoming_pipeline += [
+
+            ]
+
         if rename:
             incoming_pipeline += [sub({'filename': get_replacement_dict(rename)})]
         incoming_pipeline += [annex]

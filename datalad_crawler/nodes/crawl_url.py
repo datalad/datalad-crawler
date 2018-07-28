@@ -65,7 +65,8 @@ class crawl_url(object):
             return
         # this is just a cruel first attempt
         lgr.debug("Visiting %s" % url)
-
+        if 'initial_url' not in data:
+            data['initial_url'] = url
         try:
             retry = 0
             orig_url = url
@@ -97,12 +98,12 @@ class crawl_url(object):
 
         data_ = updated(data, zip(self._output, (page, url)))
         yield data_
-
         # now recurse if matchers were provided
         matchers = self._matchers
         if matchers:
             lgr.debug("Looking for more URLs at %s using %s", url, matchers)
-            for matcher in (matchers if isinstance(matchers, (list, tuple)) else [matchers]):
+            matchers = matchers if isinstance(matchers, (list, tuple)) else [matchers]
+            for matcher in matchers:
                 for data_matched in matcher(data_):
                     if 'url' not in data_matched:
                         lgr.warning("Got data without a url from %s" % matcher)

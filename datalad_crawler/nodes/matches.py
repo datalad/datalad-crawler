@@ -41,9 +41,26 @@ class ExtractorMatch(object):
     """Generic matching extractor
     """
     def __init__(self, query, input='response', output='match', pop_input=False,
-                 allow_multiple=False, xpaths=None, csss=None, min_count=None,
-                 max_count=None):
-        """"""
+                 allow_multiple=False, xpaths=None, csss=None,
+                 min_count=None, max_count=None, finalize_each=True):
+        """
+
+        Parameters
+        ----------
+        query:
+        input:
+        output:
+        pop_input:
+        allow_multiple:
+        xpaths:
+        csss:
+        min_count:
+        max_count:
+        finalize_each: bool, optional
+          If set to True, it would call finalize upon each call of the node,
+          so min/max_count checks would be done per each call, instead of for
+          the entire duration of node use
+        """
         # TODO: define arguments
         self.query = query
         # allow_multiple concerns only extraction of additional xpaths and csss
@@ -55,11 +72,15 @@ class ExtractorMatch(object):
         self._pop_input = False
         self._min_count = min_count
         self._max_count = max_count
+        self._finalize_each = finalize_each
+        self.count = 0
+        self._finalized = True
 
     def _select_and_extract(self, selector, query, data):  # pragma: no cover
         raise NotImplementedError
 
     def __call__(self, data):
+        self._finalized = False
         input = data.pop(self._input) if self._pop_input else data[self._input]
 
         if not Response:
@@ -76,7 +97,9 @@ class ExtractorMatch(object):
         else:
             selector = Selector(text=input)
 
-        count = 0
+        if 'url' in data:
+            # store URL for the page from where the match has happened
+            data['listing_url'] = data['url']
         for entry, data_ in self._select_and_extract(selector, self.query, data):
             data_ = updated(data_, {self._output: entry.extract()})
             # now get associated xpaths, css, etc
@@ -95,22 +118,30 @@ class ExtractorMatch(object):
                             data_[key] = key_extracted
                             # raise NotImplementedError("Don't know what to do yet with this one")
                         else:
-                            lgr.warn(
+                            lgr.warning(
                                 "Got multiple selections for xpath query %s. "
                                 "Keeping only the first one: %s" % (repr(selector_), key_extracted[0]))
                             data_[key] = key_extracted[0]
                     else:
                         data_[key] = key_extracted[0]
-            count += 1
+            self.count += 1
             yield data_
+        if self._finalize_each:
+            self.finalize()
 
-        if self._min_count and count < self._min_count:
+    def finalize(self):
+        if self._finalized:  # already done
+            return
+        if self._min_count and self.count < self._min_count:
             raise ValueError("Did not match required %d matches (got %d) using %s"
-                             % (self._min_count, count, self))
+                             % (self._min_count, self.count, self))
 
-        if self._max_count and count > self._max_count:
+        if self._max_count and self.count > self._max_count:
             raise ValueError("Matched more than %d matches (got %d) using %s"
-                             % (self._max_count, count, self))
+                             % (self._max_count, self.count, self))
+        self.count = 0
+        self._finalized = True
+
 
 
 class ScrapyExtractorMatch(ExtractorMatch):
