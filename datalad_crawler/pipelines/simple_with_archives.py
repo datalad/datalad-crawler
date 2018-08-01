@@ -134,7 +134,7 @@ def pipeline(url=None,
         incoming_pipeline = [ # Download all the archives found on the project page
             crawler,
             a_href_match(a_href_match_, min_count=1, finalize_each=False),
-            debug(fix_url),
+            fix_url,
         ]
         if path_buildup == 'relpath':
             incoming_pipeline += [
