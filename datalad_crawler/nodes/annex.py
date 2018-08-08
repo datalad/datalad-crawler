@@ -327,7 +327,7 @@ class Annexificator(object):
         self.yield_non_updated = yield_non_updated
 
         if largefiles:
-            repo_largefiles = self.repo.get_git_attributes().get('annex.largefiles', None)
+            repo_largefiles = self.repo.get_gitattributes('.')['.'].get('annex.largefiles', None)
             if repo_largefiles is not None:
                 lgr.info(
                     "Not adding annex.largefiles=%s to git annex calls because "
@@ -857,7 +857,7 @@ class Annexificator(object):
         # there is something to commit and backends was set but no .gitattributes yet
         path = self.repo.path
         if self.repo.dirty and \
-                'annex.backend' not in self.repo.get_git_attributes() and \
+                'annex.backend' not in self.repo.get_gitattributes('.')['.'] and \
                 isinstance(self.repo, AnnexRepo):
             backends = self.repo.default_backends
             if backends:
