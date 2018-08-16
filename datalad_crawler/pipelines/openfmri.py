@@ -34,7 +34,7 @@ from datalad.dochelpers import exc_str
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.openfmri")
 
-TOPURL = "https://openfmri.org/dataset/"
+TOPURL = "https://legacy.openfmri.org/dataset/"
 
 
 # define a pipeline factory function accepting necessary keyword arguments
