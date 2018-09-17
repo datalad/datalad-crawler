@@ -20,12 +20,12 @@ from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.misc import skip_if, continue_if
 from ..nodes.annex import Annexificator
-from ...consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
-from ...support.strings import get_replacement_dict
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
+from datalad.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from datalad.support.strings import get_replacement_dict
 from datalad.utils import updated
 
 lgr = getLogger("datalad.crawler.pipelines.kaggle")
@@ -94,7 +94,8 @@ def pipeline(dataset,
              backend='MD5E'):
     """Pipeline to crawl/annex a physionet dataset"""
 
-    url = "%s/%s" % (physdburl, dataset)
+    #url = "%s/%s" % (physdburl, dataset)
+    url = "%s/%s" % (topurl, dataset)
     if not isinstance(leading_dirs_depth, int):
         leading_dirs_depth = int(leading_dirs_depth)
 
