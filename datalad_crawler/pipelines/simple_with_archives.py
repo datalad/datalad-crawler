@@ -25,7 +25,7 @@ lgr = getLogger("datalad.crawler.pipelines.kaggle")
 
 
 def pipeline(url=None,
-             a_href_match_='.*/download/.*\.(tgz|tar.*|zip)',
+             a_href_match_='.*/download/.*\.(tgz|tar.*|zip|gz)',
              tarballs=True,
              datalad_downloader=False,
              use_current_dir=False,
@@ -33,6 +33,7 @@ def pipeline(url=None,
              rename=None,
              backend='MD5E',
              add_archive_leading_dir=False,
+             archives_re="\.(zip|tgz|tar(\..+)?|gz)$",
              annex=None,
              add_annex_to_incoming_pipeline=False,
              incoming_pipeline=None):
@@ -90,7 +91,7 @@ def pipeline(url=None,
         [   # nested pipeline so we could skip it entirely if nothing new to be merged
             annex.merge_branch('incoming', strategy='theirs', commit=False),  #, skip_no_changes=False),
             [   # Pipeline to augment content of the incoming and commit it to master
-                find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
+                find_files(archives_re, fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
                 annex.add_archive_content(
                     existing='archive-suffix',
                     # Since inconsistent and seems in many cases no leading dirs to strip, keep them as provided
