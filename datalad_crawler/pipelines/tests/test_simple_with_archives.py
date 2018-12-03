@@ -98,15 +98,17 @@ if (external_versions['datalad'] >= '0.11.2'
 @serve_path_via_http
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-def test_crawl_autoaddtext(ind, topurl, outd):
+def check_crawl_autoaddtext(gz, ind, topurl, outd):
     ds = create(outd, text_no_annex=True)
     with chpwd(outd):  # TODO -- dataset argument
+        template_kwargs = {
+            'url': topurl,
+            'a_href_match_': '.*',
+        }
+        if gz:
+            template_kwargs['archives_re'] = "\.gz$"
         crawl_init(
-            {
-                'url': topurl,
-                'a_href_match_': '.*',
-                'archives_re': "\.(zip|tgz|tar(\..+)?|gz)$",
-            }
+            template_kwargs
             , save=True
             , template='simple_with_archives'
         )
@@ -115,8 +117,18 @@ def test_crawl_autoaddtext(ind, topurl, outd):
     ok_file_under_git(outd, "anothertext", annexed=False)
     ok_file_under_git(outd, "d/textfile", annexed=False)
     ok_file_under_git(outd, "d/tooshort", annexed=True)
+
     if 'compressed.dat.gz' in TEST_TREE2:
-        ok_file_under_git(outd, "compressed.dat", annexed=False)
-        ok_file_has_content(op.join(outd, "compressed.dat"), u"мама мыла раму")
+        if gz:
+            ok_file_under_git(outd, "compressed.dat", annexed=False)
+            ok_file_has_content(op.join(outd, "compressed.dat"), u"мама мыла раму")
+        else:
+            ok_file_under_git(outd, "compressed.dat.gz", annexed=True)
     else:
         raise SkipTest("Need datalad >= 0.11.2 to test .gz files decompression")
+
+
+def test_crawl_autoaddtext():
+    yield check_crawl_autoaddtext, False
+    if 'compressed.dat.gz' in TEST_TREE2:
+        yield check_crawl_autoaddtext, True
