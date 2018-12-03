@@ -102,9 +102,14 @@ def test_crawl_autoaddtext(ind, topurl, outd):
     ds = create(outd, text_no_annex=True)
     with chpwd(outd):  # TODO -- dataset argument
         crawl_init(
-            {'url': topurl, 'a_href_match_': '.*'}
+            {
+                'url': topurl,
+                'a_href_match_': '.*',
+                'archives_re': "\.(zip|tgz|tar(\..+)?|gz)$",
+            }
             , save=True
-            , template='simple_with_archives')
+            , template='simple_with_archives'
+        )
         crawl()
     ok_clean_git(outd)
     ok_file_under_git(outd, "anothertext", annexed=False)
