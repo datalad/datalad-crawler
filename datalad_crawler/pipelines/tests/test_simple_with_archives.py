@@ -23,6 +23,7 @@ from datalad.tests.utils import serve_path_via_http
 from datalad.tests.utils import ok_file_has_content
 from datalad.tests.utils import ok_file_under_git, ok_clean_git
 from datalad.tests.utils import usecase
+from datalad.tests.utils import known_failure_v6
 from ..simple_with_archives import pipeline
 from datalad.api import create
 
@@ -42,6 +43,7 @@ from .test_balsa import TEST_TREE1
 @with_tree(tree=TEST_TREE1, archives_leading_dir=False)
 @serve_path_via_http
 @with_tempfile
+@known_failure_v6  # FIXME
 @known_failure_direct_mode  #FIXME
 def test_simple1(ind, topurl, outd):
 

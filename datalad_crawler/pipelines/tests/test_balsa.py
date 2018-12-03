@@ -7,7 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad.tests.utils import known_failure_v6
 from datalad.tests.utils import known_failure_direct_mode
 
 
@@ -129,7 +128,6 @@ TEST_TREE1 = {
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_balsa_extract_meta(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",
@@ -204,7 +202,6 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_balsa_pipeline1(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",
@@ -315,7 +312,6 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_balsa_pipeline2(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",

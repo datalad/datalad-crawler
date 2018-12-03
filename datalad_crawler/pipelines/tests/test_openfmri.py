@@ -202,7 +202,6 @@ _versioned_files = """
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_openfmri_addperms(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
