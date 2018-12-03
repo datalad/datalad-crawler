@@ -7,7 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad.tests.utils import known_failure_v6
 from datalad.tests.utils import known_failure_direct_mode
 
 
@@ -175,9 +174,9 @@ def _test_annex_file(mode, topdir, topurl, outdir):
 def test_annex_file():
     for mode in ('full', 'fast', 'relaxed',):
         if mode in ('full', 'fast'):
-            yield known_failure_direct_mode(known_failure_v6(_test_annex_file)), mode  #FIXME
+            yield known_failure_direct_mode(_test_annex_file), mode  #FIXME
         else:
-            yield known_failure_v6(_test_annex_file), mode  #FIXME
+            yield _test_annex_file, mode
 
 
 @assert_cwd_unchanged()  # we are passing annex, not chpwd
@@ -227,7 +226,7 @@ def test_add_archive_content_tar():
     # 1. We have a dedicated direct mode test build
     # 2. On a FS where direct mode is enforced, we can't switch
     for direct in (True, False):
-        yield known_failure_v6(_test_add_archive_content_tar), direct  #FIXME: the usual thing: in V6 the repo is dirty in the end, since there are files in git falsely marked 'modified'
+        yield _test_add_archive_content_tar, direct
 
 
 @assert_cwd_unchanged()

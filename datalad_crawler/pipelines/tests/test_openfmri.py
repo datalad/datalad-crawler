@@ -202,7 +202,6 @@ _versioned_files = """
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_openfmri_addperms(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
@@ -315,10 +314,13 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # all commits out there:
     # backend set, dataset init, crawler init
     # + 3*(incoming, processed, merge)
-    # + 3*aggregate-metadata update + 2*remove of obsolete metadata object files
+    # + 3*aggregate-metadata update
     #   - 1 since now that incoming starts with master, there is one less merge
-    eq_(len(commits['master']), 16)
-    eq_(len(commits_l['master']), 11)
+    # In --incremental mode there is a side effect of absent now
+    #   2*remove of obsolete metadata object files,
+    #     see https://github.com/datalad/datalad/issues/2772
+    eq_(len(commits['master']), 14)
+    eq_(len(commits_l['master']), 9)
 
     # Check tags for the versions
     eq_(out[0]['datalad_stats'].get_total().versions, ['1.0.0', '1.0.1'])
@@ -345,9 +347,9 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # parents are:
     # commit "[DATALAD] dataset aggregate metadata update\n" in commits_l['master'] and
     # commit "[DATALAD] Added files from extracted archives\n\nFiles processed: 6\n renamed: 2\n +annex: 3\nBranches merged: incoming->incoming-processed\n" in commits_l['incoming-processed']
-    eq_(hexsha(commits_l['master'][2].parents), (commits_l['master'][3].hexsha,
+    eq_(hexsha(commits_l['master'][1].parents), (commits_l['master'][2].hexsha,
                                                  commits_l['incoming-processed'][0].hexsha))
-    eq_(hexsha(commits_l['master'][5].parents), (commits_l['master'][6].hexsha,
+    eq_(hexsha(commits_l['master'][3].parents), (commits_l['master'][4].hexsha,
                                                  commits_l['incoming-processed'][1].hexsha))
 
     with chpwd(outd):
