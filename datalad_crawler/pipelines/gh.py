@@ -86,12 +86,12 @@ def pipeline(org=None,
             name = repo.name
             if include and not re.search(include, name):
                 lgr.debug(
-                    "Skipping %s since include regex search returns nothing", repo
+                    "Skipping %s since include regex search returns nothing", name
                 )
                 continue
-            if exclude and not re.search(exclude, name):
+            if exclude and re.search(exclude, name):
                 lgr.debug(
-                    "Skipping %s since exclude regex search returns smth", repo
+                    "Skipping %s since exclude regex search returns smth", name
                 )
                 continue
             # Let's just do everything here
