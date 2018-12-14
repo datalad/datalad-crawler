@@ -78,6 +78,8 @@ def pipeline(org=None,
     aggregate_later = []
     def crawl_github_org(data):
         assert list(data) == ['datalad_stats'], data
+        # TODO: actually populate the datalad_stats with # of datasets and
+        # possibly amount of data downloaded in get below
         cred = UserPassword('github')
         entity = _get_github_entity(gh, cred, None, None, org)
         all_repos = list(entity.get_repos(repo_type))
@@ -155,10 +157,13 @@ def pipeline(org=None,
         lgr.info("Dropping all data for %(dataset)s", data)
         # This should fail to drop annexed metadata since no copies
         # would be known
+        # Actually - no, since we aggregate only into its super!
         ds = data['dataset']
         drop_res = ds.drop('.')
-        # TODO: annex forget -- since initial crawl, should be perfectly
+        # notTODO: annex forget -- since initial crawl, should be perfectly
         # fine and might be of assistance to reduce impact on .git size
+        # Nope -- we do not want to mess with original openneuro's git-annex
+        # history.
         ds.repo.gc(allow_background=False)
         yield dict(data, drop_result=drop_res)
 
