@@ -46,8 +46,8 @@ from datalad.support.network import get_url_straight_filename
 from datalad.support.network import get_url_disposition_filename
 
 from datalad import cfg
-from datalad.cmd import get_runner
 
+from datalad_crawler.base import get_runner
 from datalad_crawler.pipeline import initiate_pipeline_config
 from datalad_crawler.dbs.files import PhysicalFileStatusesDB
 from datalad_crawler.dbs.files import JsonFileStatusesDB
