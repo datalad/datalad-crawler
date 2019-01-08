@@ -69,10 +69,17 @@ def get_metadata(dataset=None):
     rj = fetch_datacite_metadata()
 
     all_datasets = {}
+    records_with_empty_xmls = {}
     for i, json_ in enumerate(rj['data']):
         json_xml = json_['attributes']['xml']
         if isinstance(json_xml, text_type):
             json_xml = json_xml.encode()
+
+        if not json_xml:
+            records_with_empty_xmls[i] = json_
+            lgr.debug("Empty xml in record #%d, skipping for now", i)
+            continue
+
         xml_ = base64.decodestring(json_xml).decode('utf-8')
         reg = re.search('AlternativeTitle.?>CRCNS.org ([^<]*)<', xml_)
 
@@ -96,6 +103,12 @@ def get_metadata(dataset=None):
                         dataset_)
         all_datasets[dataset_] = dataset_meta
 
+    if dataset and records_with_empty_xmls:
+        lgr.warning(
+            "Found no record for dataset %s although there were %d records "
+            "with empty xml field",
+            dataset, len(records_with_empty_xmls)
+        )
     return None if dataset else all_datasets
 
 
