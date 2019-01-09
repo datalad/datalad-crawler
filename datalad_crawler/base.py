@@ -12,3 +12,13 @@
 
 __docformat__ = 'restructuredtext'
 
+from datalad import cfg
+from datalad.cmd import Runner
+from datalad.support.protocol import DryRunProtocol
+
+
+def get_runner(*args, **kwargs):
+    if cfg.obtain('datalad.crawl.dryrun', default=False):
+        kwargs = kwargs.copy()
+        kwargs['protocol'] = DryRunProtocol()
+    return Runner(*args, **kwargs)
