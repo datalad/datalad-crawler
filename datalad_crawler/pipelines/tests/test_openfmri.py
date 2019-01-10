@@ -365,9 +365,17 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     ok_file_under_git(opj(outd, 'changelog.txt'), annexed=False)
     ok_file_under_git(t1w_fpath, annexed=True)
 
-    from datalad.metadata.metadata import get_ds_aggregate_db_locations
-    ds = Dataset('.')
-    dbloc, objbase = get_ds_aggregate_db_locations(ds)
+    try:
+        # this is the new way
+        from datalad.metadata.metadata import get_ds_aggregate_db_locations
+        ds = Dataset('.')
+        dbloc, objbase = get_ds_aggregate_db_locations(ds)
+        dbloc = op.relpath(dbloc, start=ds.path)
+    except ImportError:
+        # this stopped working in early 2019 versions of datalad
+        from datalad.metadata.metadata import agginfo_relpath
+        dbloc = agginfo_relpath
+
     target_files = {
         './.datalad/config',
         './.datalad/crawl/crawl.cfg',
@@ -376,7 +384,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         './.datalad/crawl/statuses/incoming.json',
         './.datalad/crawl/versions/incoming.json',
         './changelog.txt', './sub-1/anat/sub-1_T1w.dat', './sub-1/beh/responses.tsv',
-        './' + op.relpath(dbloc, start=ds.path),
+        './' + dbloc,
     }
     target_incoming_files = {
         '.gitattributes',  # we marked default backend right in the incoming
