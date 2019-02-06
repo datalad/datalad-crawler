@@ -47,6 +47,9 @@ install:
   - git config --global user.name "Travis Almighty"
   - cd ..; pip install -q codecov; cd -
   - pip install -r requirements.txt
+  # To heal bloody scrapy -- yoh guesses that pip isn't good enough to guarantee
+  # specified versioning in the depends
+  - pip install --upgrade attrs
   #- pip install 'sphinx>=1.6.2'
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
