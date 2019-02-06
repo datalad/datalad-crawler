@@ -263,12 +263,23 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         path=outd,
         data_fields=['dataset'])({'dataset': 'ds666'}))
 
+    repo = AnnexRepo(outd, create=False)  # to be used in the checks
+    # Since datalad 0.11.2 all .metadata/objects go under annex.
+    # Here we have a test where we force drop all annexed content,
+    # to mitigate that let's place all metadata under git
+    dotdatalad_attributes_file = opj('.datalad', '.gitattributes')
+    repo.set_gitattributes(
+        [('metadata/objects/**', {'annex.largefiles': '(nothing)'})],
+        dotdatalad_attributes_file
+    )
+    # --amend so we do not cause change in # of commits below
+    repo.commit("gitattributes", files=dotdatalad_attributes_file, options=['--amend'])
+
     with chpwd(outd):
         pipeline = ofpipeline('ds666', versioned_urls=False, topurl=topurl)
         out = run_pipeline(pipeline)
     eq_(len(out), 1)
 
-    repo = AnnexRepo(outd, create=False)  # to be used in the checks
     # Inspect the tree -- that we have all the branches
     branches = {'master', 'incoming', 'incoming-processed', 'git-annex'}
     eq_(set(repo.get_branches()), branches)
