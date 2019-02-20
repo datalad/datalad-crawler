@@ -139,10 +139,6 @@ class initiate_dataset(object):
             # and/or branch becomes an option for the "creator"
 
         backend = self.backend or cfg.obtain('datalad.crawl.default_backend', default='MD5E')
-        direct = cfg.obtain('datalad.crawl.init_direct', default=False)
-
-        if direct:
-            raise NotImplementedError("Disabled for now to init direct mode ones")
 
         ds = create(
                 path=path,
