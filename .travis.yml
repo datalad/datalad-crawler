@@ -14,6 +14,7 @@ env:
     - BOTO_CONFIG=/tmp/nowhere
     - DATALAD_TESTS_SSH=1
     - DATALAD_LOG_CMD_ENV=GIT_SSH_COMMAND
+    - DATALAD_LOG_LEVEL=2
     - TESTS_TO_PERFORM=
     - NOSE_OPTS=-s
     #- NOSE_SELECTION_OP="not "   # so it would be "not (integration or usecase)"
