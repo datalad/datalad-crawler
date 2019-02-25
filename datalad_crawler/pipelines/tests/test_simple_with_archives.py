@@ -14,9 +14,11 @@ from os.path import join as opj
 
 from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
 from ...nodes.annex import initiate_dataset
+from datalad.dochelpers import exc_str
 from datalad.utils import chpwd
 from datalad.utils import _path_
 from datalad.support import path as op
+from datalad.support.exceptions import MissingExternalDependency
 from datalad.tests.utils import with_tree
 from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
 from datalad.tests.utils import with_tempfile
@@ -112,7 +114,10 @@ def check_crawl_autoaddtext(gz, ind, topurl, outd):
             , save=True
             , template='simple_with_archives'
         )
-        crawl()
+        try:
+            crawl()
+        except MissingExternalDependency as exc:
+            raise SkipTest(exc_str(exc))
     ok_clean_git(outd)
     ok_file_under_git(outd, "anothertext", annexed=False)
     ok_file_under_git(outd, "d/textfile", annexed=False)
