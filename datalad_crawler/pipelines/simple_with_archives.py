@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A pipeline for crawling a crcns dataset"""
 
+from ..consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from ..utils import flatten
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.misc import fix_url
@@ -15,13 +17,12 @@ from ..nodes.matches import a_href_match
 from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.annex import Annexificator
-from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.strings import get_replacement_dict
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
-lgr = getLogger("datalad.crawler.pipelines.kaggle")
+lgr = getLogger("datalad.crawler.pipelines.simple_with_archives")
 
 
 def pipeline(url=None,
@@ -62,6 +63,22 @@ def pipeline(url=None,
             special_remotes=special_remotes,
             largefiles="exclude=README* and exclude=LICENSE*"
         )
+        if incoming_pipeline:
+            # if incoming pipeline already has an Annexificator, it could cause
+            # weird or incorrect behavior unless it was somehow VERY intentional
+            # So we will check and issue a warning if any node is an Annexificator
+            annexificators = [
+                n for n in flatten(incoming_pipeline)
+                if isinstance(n, Annexificator)
+            ]
+            if annexificators:
+                lgr.warning(
+                    "incoming_pipeline already contains annexificator(s): %s. "
+                    "Most likely you intended to provide annex= option into "
+                    "this pipeline with the used in incoming_pipeline Annexificator. "
+                    "Otherwise things might not work as intended",
+                    ', '.join(map(repr, annexificators))
+                )
 
     if url:
         assert not incoming_pipeline
