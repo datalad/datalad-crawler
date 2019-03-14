@@ -9,6 +9,19 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.4 (Mar 14, 2019) -- There is more to life than a Pi
+
+Primarily a variety of fixes and small enhancements. The only notable
+change is stripping away testing/support of git-annex direct mode.
+
+- do not depend on a release candidate of the DataLad, since PIP then opens the
+  way to a RCs for any later releases to be installed
+- `simple_with_archives`
+  - issue warning if incoming_pipeline has Annexificator but no `annex` is given
+- `crcns`
+  - skip (but warn if relevant) records without xml
+- do not crash while saving updated crawler's URL db to the file which is annexed.
+
 ## 0.3 (Feb 06, 2019) -- Happy New Year
 
 Primarily a variety of fixes
