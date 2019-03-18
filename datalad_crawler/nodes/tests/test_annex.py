@@ -182,13 +182,12 @@ def test_annex_file():
 @assert_cwd_unchanged()  # we are passing annex, not chpwd
 @with_tree(tree={'1.tar': {'file.txt': 'load',
                            '1.dat': 'load2'}})
-def _test_add_archive_content_tar(direct, repo_path):
+def test_add_archive_content_tar(repo_path):
     mode = 'full'
     special_remotes = [DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE]
     annex = Annexificator(path=repo_path,
                           allow_dirty=True,
                           mode=mode,
-                          direct=direct,
                           special_remotes=special_remotes,
                           largefiles="exclude=*.txt and exclude=SOMEOTHER")
     output_add = list(annex({'filename': '1.tar'}))  # adding it to annex
@@ -211,22 +210,12 @@ def _test_add_archive_content_tar(direct, repo_path):
     assert_equal(output_addarchive,
                  [{'datalad_stats': ActivityStats(add_annex=1, add_git=1, files=3, renamed=2),
                    'filename': '1.tar'}])
-    if not direct:  # Notimplemented otherwise
-        assert_true(annex.repo.dirty)
+    assert_true(annex.repo.dirty)
     annex.repo.commit("added")
     ok_file_under_git(annex.repo.path, 'file.txt', annexed=False)
     ok_file_under_git(annex.repo.path, '1.dat', annexed=True)
     assert_false(lexists(opj(repo_path, '1.tar')))
-    if not direct:  # Notimplemented otherwise
-        assert_false(annex.repo.dirty)
-
-
-def test_add_archive_content_tar():
-    #FIXME: This doesn't really make sense:
-    # 1. We have a dedicated direct mode test build
-    # 2. On a FS where direct mode is enforced, we can't switch
-    for direct in (True, False):
-        yield _test_add_archive_content_tar, direct
+    assert_false(annex.repo.dirty)
 
 
 @assert_cwd_unchanged()

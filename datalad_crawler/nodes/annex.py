@@ -46,8 +46,8 @@ from datalad.support.network import get_url_straight_filename
 from datalad.support.network import get_url_disposition_filename
 
 from datalad import cfg
-from datalad.cmd import get_runner
 
+from datalad_crawler.base import get_runner
 from datalad_crawler.pipeline import initiate_pipeline_config
 from datalad_crawler.dbs.files import PhysicalFileStatusesDB
 from datalad_crawler.dbs.files import JsonFileStatusesDB
@@ -139,10 +139,6 @@ class initiate_dataset(object):
             # and/or branch becomes an option for the "creator"
 
         backend = self.backend or cfg.obtain('datalad.crawl.default_backend', default='MD5E')
-        direct = cfg.obtain('datalad.crawl.init_direct', default=False)
-
-        if direct:
-            raise NotImplementedError("Disabled for now to init direct mode ones")
 
         ds = create(
                 path=path,

@@ -13,6 +13,7 @@ from datalad.tests.utils import known_failure_direct_mode
 
 import os
 from glob import glob
+import os.path as op
 from os.path import join as opj
 from os.path import exists
 from mock import patch
@@ -29,7 +30,10 @@ from datalad.support.stats import ActivityStats
 from datalad.support.gitrepo import GitRepo
 from datalad.support.annexrepo import AnnexRepo
 
-from datalad.api import clean
+from datalad.api import (
+    clean,
+    Dataset,
+)
 from datalad.utils import chpwd
 from datalad.utils import find_files
 from datalad.utils import swallow_logs
@@ -259,12 +263,23 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         path=outd,
         data_fields=['dataset'])({'dataset': 'ds666'}))
 
+    repo = AnnexRepo(outd, create=False)  # to be used in the checks
+    # Since datalad 0.11.2 all .metadata/objects go under annex.
+    # Here we have a test where we force drop all annexed content,
+    # to mitigate that let's place all metadata under git
+    dotdatalad_attributes_file = opj('.datalad', '.gitattributes')
+    repo.set_gitattributes(
+        [('metadata/objects/**', {'annex.largefiles': '(nothing)'})],
+        dotdatalad_attributes_file
+    )
+    # --amend so we do not cause change in # of commits below
+    repo.commit("gitattributes", files=dotdatalad_attributes_file, options=['--amend'])
+
     with chpwd(outd):
         pipeline = ofpipeline('ds666', versioned_urls=False, topurl=topurl)
         out = run_pipeline(pipeline)
     eq_(len(out), 1)
 
-    repo = AnnexRepo(outd, create=False)  # to be used in the checks
     # Inspect the tree -- that we have all the branches
     branches = {'master', 'incoming', 'incoming-processed', 'git-annex'}
     eq_(set(repo.get_branches()), branches)
@@ -361,7 +376,17 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     ok_file_under_git(opj(outd, 'changelog.txt'), annexed=False)
     ok_file_under_git(t1w_fpath, annexed=True)
 
-    from datalad.metadata.metadata import agginfo_relpath
+    try:
+        # this is the new way
+        from datalad.metadata.metadata import get_ds_aggregate_db_locations
+        ds = Dataset('.')
+        dbloc, objbase = get_ds_aggregate_db_locations(ds)
+        dbloc = op.relpath(dbloc, start=ds.path)
+    except ImportError:
+        # this stopped working in early 2019 versions of datalad
+        from datalad.metadata.metadata import agginfo_relpath
+        dbloc = agginfo_relpath
+
     target_files = {
         './.datalad/config',
         './.datalad/crawl/crawl.cfg',
@@ -370,7 +395,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         './.datalad/crawl/statuses/incoming.json',
         './.datalad/crawl/versions/incoming.json',
         './changelog.txt', './sub-1/anat/sub-1_T1w.dat', './sub-1/beh/responses.tsv',
-        './' + agginfo_relpath,
+        './' + dbloc,
     }
     target_incoming_files = {
         '.gitattributes',  # we marked default backend right in the incoming
