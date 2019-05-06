@@ -106,7 +106,8 @@ if (external_versions['datalad'] >= '0.11.2'
 @with_tempfile
 @known_failure_direct_mode  #FIXME
 def check_crawl_autoaddtext(gz, ind, topurl, outd):
-    ds = create(outd, text_no_annex=True)
+    ds = create(outd)
+    ds.run_procedure("cfg_text2git")
     with chpwd(outd):  # TODO -- dataset argument
         template_kwargs = {
             'url': topurl,
