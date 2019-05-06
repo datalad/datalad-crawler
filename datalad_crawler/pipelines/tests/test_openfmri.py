@@ -322,10 +322,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 6)
-    eq_(len(commits_l['incoming']), 6)
-    eq_(len(commits['incoming-processed']), 9)
-    eq_(len(commits_l['incoming-processed']), 6)
+
     # all commits out there:
     # backend set, dataset init, crawler init
     # + 3*(incoming, processed, merge)
@@ -336,6 +333,11 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     #     see https://github.com/datalad/datalad/issues/2772
     eq_(len(commits['master']), 14)
     eq_(len(commits_l['master']), 9)
+
+    eq_(len(commits['incoming']), 6)
+    eq_(len(commits_l['incoming']), 6)
+    eq_(len(commits['incoming-processed']), 9)
+    eq_(len(commits_l['incoming-processed']), 6)
 
     # Check tags for the versions
     eq_(out[0]['datalad_stats'].get_total().versions, ['1.0.0', '1.0.1'])
@@ -564,10 +566,6 @@ def test_openfmri_pipeline2(ind, topurl, outd):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 4)
-    eq_(len(commits_l['incoming']), 4)
-    eq_(len(commits['incoming-processed']), 5)
-    eq_(len(commits_l['incoming-processed']), 4)
 
     # all commits out there:
     # backend set, dataset init, crawler, init, incoming (shares with master -1),
@@ -575,6 +573,11 @@ def test_openfmri_pipeline2(ind, topurl, outd):
     eq_(len(commits['master']), 6)
     # backend set, dataset init, init, merge, aggregate metadata:
     eq_(len(commits_l['master']), 5)
+
+    eq_(len(commits['incoming']), 4)
+    eq_(len(commits_l['incoming']), 4)
+    eq_(len(commits['incoming-processed']), 5)
+    eq_(len(commits_l['incoming-processed']), 4)
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):
