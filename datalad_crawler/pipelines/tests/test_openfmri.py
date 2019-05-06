@@ -325,19 +325,21 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
 
     # all commits out there:
     # backend set, dataset init, crawler init
+    #   (2 or 3 commits, depending on create variant)
     # + 3*(incoming, processed, merge)
     # + 3*aggregate-metadata update
     #   - 1 since now that incoming starts with master, there is one less merge
     # In --incremental mode there is a side effect of absent now
     #   2*remove of obsolete metadata object files,
     #     see https://github.com/datalad/datalad/issues/2772
-    eq_(len(commits['master']), 14)
-    eq_(len(commits_l['master']), 9)
+    ncommits_master = len(commits['master'])
+    assert_in(ncommits_master, [13, 14])
+    assert_in(len(commits_l['master']), [8, 9])
 
-    eq_(len(commits['incoming']), 6)
-    eq_(len(commits_l['incoming']), 6)
-    eq_(len(commits['incoming-processed']), 9)
-    eq_(len(commits_l['incoming-processed']), 6)
+    eq_(len(commits['incoming']), ncommits_master - 8)
+    eq_(len(commits_l['incoming']), ncommits_master - 8)
+    eq_(len(commits['incoming-processed']), ncommits_master - 5)
+    eq_(len(commits_l['incoming-processed']), ncommits_master - 8)
 
     # Check tags for the versions
     eq_(out[0]['datalad_stats'].get_total().versions, ['1.0.0', '1.0.1'])
@@ -347,7 +349,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
 
     # Ben: The tagged ones currently are the ones with the message
     # '[DATALAD] dataset aggregate metadata update\n':
-    eq_(repo_tags[0]['hexsha'], commits_l['master'][-5].hexsha)  # next to the last one
+    eq_(repo_tags[0]['hexsha'], commits_l['master'][4].hexsha)  # next to the last one
     eq_(repo_tags[-1]['hexsha'], commits_l['master'][0].hexsha)  # the last one
 
     def hexsha(l):
@@ -569,15 +571,16 @@ def test_openfmri_pipeline2(ind, topurl, outd):
 
     # all commits out there:
     # backend set, dataset init, crawler, init, incoming (shares with master -1),
+    #   (2 or 3 commits, depending on create variant)
     # incoming-processed, merge, aggregate metadata:
-    eq_(len(commits['master']), 6)
-    # backend set, dataset init, init, merge, aggregate metadata:
-    eq_(len(commits_l['master']), 5)
+    ncommits_master = len(commits['master'])
+    assert_in(ncommits_master, [5, 6])
+    assert_in(len(commits_l['master']), [4, 5])
 
-    eq_(len(commits['incoming']), 4)
-    eq_(len(commits_l['incoming']), 4)
-    eq_(len(commits['incoming-processed']), 5)
-    eq_(len(commits_l['incoming-processed']), 4)
+    eq_(len(commits['incoming']), ncommits_master - 2)
+    eq_(len(commits_l['incoming']), ncommits_master - 2)
+    eq_(len(commits['incoming-processed']), ncommits_master - 1)
+    eq_(len(commits_l['incoming-processed']), ncommits_master - 2)
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):
