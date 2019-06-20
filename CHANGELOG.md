@@ -9,6 +9,11 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.4.1 (Jun 20, 2019) -- Let us all stay friends
+
+- Compatibility layer with 0.12 series of DataLad changing API
+  (no backend option for `create`)
+
 ## 0.4 (Mar 14, 2019) -- There is more to life than a Pi
 
 Primarily a variety of fixes and small enhancements. The only notable
