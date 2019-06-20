@@ -225,9 +225,15 @@ def test_balsa_pipeline1(ind, topurl, outd, clonedir):
     assert_not_equal(repo.get_hexsha('incoming'), repo.get_hexsha('incoming-processed'))
 
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
-    eq_(len(commits['incoming']), 1 + 3)  # +3 since now we base on master
-    eq_(len(commits['incoming-processed']), 2 + 3)
-    eq_(len(commits['master']), 5)  # all commits out there -- init ds + init crawler + 1*(incoming, processed)
+    # all commits out there -- init ds + init crawler + 1*(incoming, processed)
+    # The number of commits in master differs based on the create variant used
+    # (the one DataLad's master makes only one commit).
+    ncommits_master = len(commits["master"])
+    assert_in(ncommits_master, [4, 5])
+    # incoming branches from master but lacks one merge commit.
+    eq_(len(commits['incoming']), ncommits_master - 1)
+    # incoming-processed is on master.
+    eq_(len(commits['incoming-processed']), ncommits_master)
 
     with chpwd(outd):
         eq_(set(glob('*')), {'dir1', 'file1.nii'})

@@ -14,10 +14,12 @@ from os import listdir
 from os.path import join as opj, exists, lexists, basename
 from collections import OrderedDict
 from datalad.tests.utils import with_tempfile, eq_, ok_, SkipTest
+import logging
 from mock import patch
 
 from ..annex import initiate_dataset
 from ..annex import Annexificator
+from datalad.utils import swallow_logs
 from datalad.tests.utils import assert_equal, assert_in
 from datalad.tests.utils import assert_raises
 from datalad.tests.utils import assert_true, assert_false
@@ -26,6 +28,7 @@ from datalad.tests.utils import ok_file_under_git
 from datalad.tests.utils import ok_file_has_content
 from datalad.tests.utils import assert_cwd_unchanged
 from datalad.tests.utils import put_file_under_git
+from datalad.tests.utils import skip_if
 from ...pipeline import load_pipeline_from_config
 from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH, DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.stats import ActivityStats
@@ -77,6 +80,34 @@ def test_initiate_dataset(path, path2):
     eq_(annex3.get_file_backend('test2.dat'), 'MD5E')
 
     raise SkipTest("TODO much more")
+
+
+@with_tempfile(mkdir=True)
+@known_failure_direct_mode
+def test_initiate_dataset_new_create_warns(path):
+    try:
+        from datalad.distribution import create
+    except ImportError:
+        # We are on a version of DataLad with the new create.
+        expected_backend = "MD5E"
+        expect_warning = True
+    else:
+        expected_backend = "SHA256E"
+        expect_warning = False
+
+    path = opj(path, 'test')
+    with swallow_logs(new_level=logging.WARNING) as cml:
+        list(initiate_dataset('template', 'testdataset',
+                              backend="SHA256E", path=path)())
+        if expect_warning:
+            assert_in("datalad.repo.backend", cml.out)
+    # DataLad's new create honors datalad.repo.backend rather than the
+    # crawler-specific one.
+    fname = 'test.dat'
+    f = opj(path, fname)
+    annex = put_file_under_git(f, content="test", annexed=True)
+    eq_(annex.get_file_backend(f), expected_backend)
+
 
 
 @with_tree(tree=[
