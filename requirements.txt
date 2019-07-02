@@ -1,2 +1,2 @@
-# If you want to develop, use requirements-devel.txt
-git+https://github.com/datalad/datalad.git
+# TODO: add travis run, at least one or two for testing against master
+# git+https://github.com/datalad/datalad.git
