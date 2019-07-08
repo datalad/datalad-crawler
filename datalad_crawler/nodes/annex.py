@@ -1448,7 +1448,7 @@ class Annexificator(object):
                 raise NotImplementedError("provide handling to drop specific file")
             else:
                 lgr.debug("Dropping all files in %s", self.repo)
-                self.repo.drop([], options=['--all'] + ['--force'] if force else [])
+                self.repo.drop([], options=['--all'] + (['--force'] if force else []))
         return _drop
 
     def initiate_dataset(self, *args, **kwargs):
