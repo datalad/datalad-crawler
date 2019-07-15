@@ -107,7 +107,14 @@ class XNATServer(object):
         providers = Providers.from_config_files()
         self.downloader = providers.get_provider(topurl).get_downloader(topurl)
         # set without various methods
-        self.experiment_labels = None
+        self._experiment_labels = None
+
+    @property
+    def experiment_labels(self):
+        if self._experiment_labels is None:
+            lgr.debug("Experiment labels are not known yet")
+            self.get_all_experiments()
+        return self._experiment_labels
 
     def __call__(self, query,
                  format='json',
@@ -188,15 +195,13 @@ class XNATServer(object):
         else:
             limited_projects = all_projects
 
-        fields_to_check = DEFAULT_RESULT_FIELDS.union({'title'})
-        experiments = self('data/experiments', fields_to_check=fields_to_check)
-        self.experiment_labels = { e['id']: e['label'] for e in experiments }
+        experiments = self.get_all_experiments()
 
         if drop_empty:
             # first pass: exclude projects without experiments
             non_empty_projects = set([ e['project'] for e in experiments ])
             out = []
-            # second pass: descend into exeriments to find files
+            # second pass: descend into experiments to find files
             for p in limited_projects:
                 if self.project_has_files(p['id']):
                     out.append(p)
@@ -207,6 +212,22 @@ class XNATServer(object):
             out = limited_projects
 
         return list_to_dict(out, 'id') if asdict else out
+
+    def get_all_experiments(self):
+        """Query XNAT server for all known experiments.
+
+        Side effect: (re)assigns self._experiment_labels mapping which is also
+        used for crawling an individual dataset
+
+        Returns
+        -------
+        list of experiments
+        """
+        lgr.debug("Requesting full list of experiments")
+        fields_to_check = DEFAULT_RESULT_FIELDS.union({'title'})
+        experiments = self('data/experiments', fields_to_check=fields_to_check)
+        self._experiment_labels = {e['id']: e['label'] for e in experiments}
+        return experiments
 
     def project_has_files(self, project):
         for subject in self.get_subjects(project):
@@ -270,8 +291,12 @@ def superdataset_pipeline(url, limit=None, drop_empty=True, **kwargs):
     Parameters
     ----------
     url
-    limit :
+    limit : TODO, optional
       Types of access to limit to, see XNAT.get_datasets
+    drop_empty: bool, optional
+      If set, do not create datasets which are empty (no files).
+      Note - it requires obtaining details for every project, which could be
+      a heavy operation
     kwargs
 
     Returns
@@ -315,8 +340,6 @@ def pipeline(url, dataset, project_access='public', subjects=None):
     subjects = assure_list(subjects)
 
     xnat = XNATServer(url)
-    # set the experiment label cache
-    xnat.get_projects()
 
     def get_project_info(data):
         out = xnat('data/projects/%s' % dataset,
