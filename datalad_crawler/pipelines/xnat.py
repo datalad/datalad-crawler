@@ -100,11 +100,14 @@ def extract_experiment_info(data):
 
 
 class XNATServer(object):
+
     def __init__(self, topurl):
         self.topurl = topurl
         from datalad.downloaders.providers import Providers
         providers = Providers.from_config_files()
         self.downloader = providers.get_provider(topurl).get_downloader(topurl)
+        # set without various methods
+        self.experiment_labels = None
 
     def __call__(self, query,
                  format='json',
@@ -125,10 +128,11 @@ class XNATServer(object):
             if return_plain:
                 return j
             assert j.keys() == ['resultset']
-            j = lower_case_the_keys(j['resultset'])
+
+            jrs = lower_case_the_keys(j['resultset'])
             if fields_to_check:
-                eq_(set(j.keys()), fields_to_check)
-            return lower_case_the_keys(j['result'])
+                eq_(set(jrs.keys()), fields_to_check)
+            return lower_case_the_keys(jrs['result'])
         return out
 
     def get_projects(self, limit=None, drop_empty=True, asdict=True):
@@ -140,22 +144,40 @@ class XNATServer(object):
            'private' -- projects you have no any access to. 'protected' -- you could
            fetch description but not the data. None - would list all the projects
 
-        drop_empty: whether to drop projects with no experiments.  Implies 
-        limit = 'public' since we need access to projects to determine if they 
-        are empty.
+        drop_empty: bool
+          whether to drop projects with no experiments.  Implies
+          limit = 'public' since we need access to projects to determine if they
+          are empty.  If drop_empty is set nd limit is None, limit is set to
+          'public'
         """
 
+        limit = assure_list(limit)
+
         if drop_empty:
-            limit = 'public'
+            # TODO: rework this logic/restriction
+            #  yoh thinks this should not be implied (we could check "private"
+            #  ones we have access to) here.  And if anything, should be checked
+            #  and warned if changing the value:
+            #     if limit not in (None, 'public'):
+            #        lgr.warning(...)
+            # For now, just assert that so we have no hidden/unexpected behaviors
+            # after we handle the default
+            if not limit:
+                limit = ['public']
+            assert limit == ['public']
+
 
         kw = {}
+
         if limit:
-            kw['options'] = {"accessible": "true"} if limit else None
+            # Q yoh:  is this only for public? then check above should be
+            #   if 'public' in limit, and assure_list(limit) should go above
+            kw['options'] = {"accessible": "true"}
             kw['fields_to_check'] = DEFAULT_RESULT_FIELDS | {'title', 'xdat_user_id'}
+
         all_projects = self('data/projects', **kw)
 
         if limit:
-            limit = assure_list(limit)
             # double check that all the project_access thingies in the set which
             # we know
             assert all(p['project_access'] in PROJECT_ACCESS_TYPES
