@@ -156,15 +156,14 @@ class XNATServer(object):
         if drop_empty:
             # TODO: rework this logic/restriction
             #  yoh thinks this should not be implied (we could check "private"
-            #  ones we have access to) here.  And if anything, should be checked
-            #  and warned if changing the value:
-            #     if limit not in (None, 'public'):
-            #        lgr.warning(...)
-            # For now, just assert that so we have no hidden/unexpected behaviors
-            # after we handle the default
-            if not limit:
-                limit = ['public']
-            assert limit == ['public']
+            #  ones we have access to) here.
+            if limit != ['public']:
+                lgr.warning(
+                    "Limit was set to %s but ATM we can drop_empty only if "
+                    "limit is 'public'. Reset to 'public'",
+                    repr(limit)
+                )
+            limit = ['public']
 
 
         kw = {}
