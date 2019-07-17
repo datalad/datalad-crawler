@@ -134,7 +134,7 @@ class XNATServer(object):
             j = lower_case_the_keys(j)
             if return_plain:
                 return j
-            assert j.keys() == ['resultset']
+            assert list(j) == ['resultset']
 
             jrs = lower_case_the_keys(j['resultset'])
             if fields_to_check:
