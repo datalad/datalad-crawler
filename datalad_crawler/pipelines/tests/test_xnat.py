@@ -72,6 +72,7 @@ def skip_xnat(func):
         return func(*args, **kwargs)
     return newfunc
 
+
 @skip_xnat
 def check_basic_xnat_interface(url, project, empty_project, subjects):
     nitrc = XNATServer(url)
@@ -144,6 +145,8 @@ def test_nitrc_superpipeline(outd):
         out = run_pipeline(pipeline)
     eq_(len(out), 1)
     # TODO: actual tests on what stuff was crawled
+
+
 test_nitrc_superpipeline.tags = ['integration']
 
 
@@ -155,7 +158,9 @@ def test_nitrc_pipeline(outd):
     ds = Dataset(outd).create()
     with chpwd(outd):
         out = run_pipeline(
-            pipeline(NITRC_IR, dataset='fcon_1000', subjects=['xnat_S00401'])
+            pipeline(NITRC_IR, project='fcon_1000', subjects=['xnat_S00401'])
         )
     eq_(len(out), 1)
+
+
 test_nitrc_superpipeline.tags = ['integration']

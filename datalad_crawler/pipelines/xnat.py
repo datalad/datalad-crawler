@@ -285,7 +285,7 @@ class XNATServer(object):
 
 # define a pipeline factory function accepting necessary keyword arguments
 # Should have no strictly positional arguments
-def superdataset_pipeline(url, limit=None, drop_empty=True, **kwargs):
+def superdataset_pipeline(url, limit=None, drop_empty=True):
     """
     
     Parameters
@@ -305,7 +305,7 @@ def superdataset_pipeline(url, limit=None, drop_empty=True, **kwargs):
     """
 
     annex = Annexificator(no_annex=True, allow_dirty=False)
-    lgr.info("Creating a pipeline with kwargs %s" % str(kwargs))
+    lgr.info("Creating a pipeline with url=%s limit=%s drop_empty=%s", url, limit, drop_empty)
     limit = assure_list(limit)
     drop_empty = assure_bool(drop_empty)
 
@@ -320,14 +320,14 @@ def superdataset_pipeline(url, limit=None, drop_empty=True, **kwargs):
 
     return [
         get_projects,
-        assign({'dataset': '%(id)s',
+        assign({'project': '%(id)s',
                 'dataset_name': '%(id)s',
                 'url': url
                 }, interpolate=True),
         # TODO: should we respect  x quarantine_status
         annex.initiate_dataset(
             template="xnat",
-            data_fields=['dataset', 'url', 'project_access'],  # TODO: may be project_access
+            data_fields=['project', 'url', 'project_access'],  # TODO: may be project_access
             # let's all specs and modifications reside in master
             # branch='incoming',  # there will be archives etc
             existing='skip'
@@ -336,13 +336,14 @@ def superdataset_pipeline(url, limit=None, drop_empty=True, **kwargs):
     ]
 
 
-def pipeline(url, dataset, project_access='public', subjects=None):
+def pipeline(url, project, project_access='public', subjects=None):
+    # TODO: Ben: Clarify parameters. In particular `project_access` is unclear to me
     subjects = assure_list(subjects)
 
     xnat = XNATServer(url)
 
     def get_project_info(data):
-        out = xnat('data/projects/%s' % dataset,
+        out = xnat('data/projects/%s' % project,
                    return_plain=True
                    )
         # for NITRC I need to get more!
@@ -355,7 +356,7 @@ def pipeline(url, dataset, project_access='public', subjects=None):
 
     def get_files(data):
 
-        for f in xnat.get_all_files_for_project(dataset, subjects=subjects):
+        for f in xnat.get_all_files_for_project(project, subjects=subjects):
             # TODO: tune up filename
             # TODO: get url
             prefix = '/data/experiments/'
