@@ -140,19 +140,38 @@ class initiate_dataset(object):
 
         backend = self.backend or cfg.obtain('datalad.crawl.default_backend', default='MD5E')
 
-        ds = create(
-                path=path,
-                force=False,
-                # no_annex=False,  # TODO: add as an arg
-                # Passing save arg based on backend was that we need to save only if
-                #  custom backend was specified, but now with dataset id -- should always save
-                # save=not bool(backend),
-                # annex_version=None,
-                annex_backend=backend,
-                #git_opts=None,
-                #annex_opts=None,
-                #annex_init_opts=None
-        )
+        try:
+            ds = create(
+                    path=path,
+                    force=False,
+                    # no_annex=False,  # TODO: add as an arg
+                    # Passing save arg based on backend was that we need to save only if
+                    #  custom backend was specified, but now with dataset id -- should always save
+                    # save=not bool(backend),
+                    # annex_version=None,
+                    annex_backend=backend,
+                    #git_opts=None,
+                    #annex_opts=None,
+                    #annex_init_opts=None
+            )
+        except TypeError:
+            # The exception was probably due to using annex_backend with new
+            # create. Try again without that parameter.
+            #
+            # TODO: Once the minimum DataLad version is 0.12.0, the create call
+            # above should be dropped.
+            ds = create(path=path, force=False)
+            if self.backend or cfg.get('dataset.crawl.default_backend'):
+                if self.backend:
+                    obsolete_method = "pipeline parameter"
+                else:
+                    obsolete_method = "'dataset.crawl.default_backend'"
+                lgr.warning(
+                    "Using backend configured by 'datalad.repo.backend' (%s). "
+                    "Configuring backend with %s is obsolete.",
+                    cfg.obtain("datalad.repo.backend", default="MD5E"),
+                    obsolete_method)
+
         if self.add_to_super:
             # place hack from 'add-to-super' times here
             # MIH: tests indicate that this wants to discover any dataset above
@@ -1429,7 +1448,7 @@ class Annexificator(object):
                 raise NotImplementedError("provide handling to drop specific file")
             else:
                 lgr.debug("Dropping all files in %s", self.repo)
-                self.repo.drop([], options=['--all'] + ['--force'] if force else [])
+                self.repo.drop([], options=['--all'] + (['--force'] if force else []))
         return _drop
 
     def initiate_dataset(self, *args, **kwargs):
