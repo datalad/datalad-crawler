@@ -59,8 +59,8 @@ setup(
     packages=[pkg for pkg in find_packages('.') if pkg.startswith('datalad')],
     # datalad command suite specs from here
     install_requires=[
-        'datalad>=0.10.0.rc3',
-        'scrapy>=1.1.0rc3',  # versioning is primarily for python3 support
+        'datalad>=0.10.0',
+        'scrapy>=1.1.0',  # versioning is primarily for python3 support
     ],
     extras_require={
         'devel-docs': [

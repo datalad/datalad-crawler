@@ -13,12 +13,17 @@ from datalad.tests.utils import known_failure_direct_mode
 from os.path import join as opj
 
 from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
-from ...nodes.annex import initiate_dataset
+from ...nodes.annex import (
+    Annexificator,
+    initiate_dataset,
+)
+from datalad.dochelpers import exc_str
 from datalad.utils import chpwd
 from datalad.utils import _path_
 from datalad.support import path as op
+from datalad.support.exceptions import MissingExternalDependency
 from datalad.tests.utils import with_tree
-from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils import eq_, assert_in
 from datalad.tests.utils import with_tempfile
 from datalad.tests.utils import serve_path_via_http
 from datalad.tests.utils import ok_file_has_content
@@ -26,11 +31,13 @@ from datalad.tests.utils import ok_file_under_git, ok_clean_git
 from datalad.tests.utils import usecase
 from datalad.tests.utils import known_failure_v6
 from datalad.tests.utils import SkipTest
+from datalad.tests.utils import swallow_logs
 from ..simple_with_archives import pipeline
 from datalad.api import create
 
 from datalad.api import crawl, crawl_init
 
+import logging
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
 
@@ -99,7 +106,8 @@ if (external_versions['datalad'] >= '0.11.2'
 @with_tempfile
 @known_failure_direct_mode  #FIXME
 def check_crawl_autoaddtext(gz, ind, topurl, outd):
-    ds = create(outd, text_no_annex=True)
+    ds = create(outd)
+    ds.run_procedure("cfg_text2git")
     with chpwd(outd):  # TODO -- dataset argument
         template_kwargs = {
             'url': topurl,
@@ -112,7 +120,10 @@ def check_crawl_autoaddtext(gz, ind, topurl, outd):
             , save=True
             , template='simple_with_archives'
         )
-        crawl()
+        try:
+            crawl()
+        except MissingExternalDependency as exc:
+            raise SkipTest(exc_str(exc))
     ok_clean_git(outd)
     ok_file_under_git(outd, "anothertext", annexed=False)
     ok_file_under_git(outd, "d/textfile", annexed=False)
@@ -132,3 +143,15 @@ def test_crawl_autoaddtext():
     yield check_crawl_autoaddtext, False
     if 'compressed.dat.gz' in TEST_TREE2:
         yield check_crawl_autoaddtext, True
+
+
+@with_tempfile(mkdir=True)
+def test_warning_no_annex_but_incoming_pipeline(outd):
+    with chpwd(outd):  # TODO -- dataset argument
+        annex = Annexificator()
+        incoming_pipeline = [[[annex]]]  # deep deep inside
+        with swallow_logs(new_level=logging.WARNING) as cml:
+            assert pipeline(incoming_pipeline=incoming_pipeline, annex=annex)
+            assert not cml.out  # we did provide annex
+            assert pipeline(incoming_pipeline=incoming_pipeline)
+            assert_in("incoming_pipeline already contains annexificator", cml.out)

@@ -83,6 +83,9 @@ class JsonBaseDB(object):
         if not exists(d):
             os.makedirs(d)
         lgr.debug("Writing %s to %s" % (self.__class__.__name__, self._filepath))
+        if lexists(self._filepath):
+            # might be annexed, can't open for over-write, thuse just remove first
+            os.unlink(self._filepath)
         with open(self._filepath, 'w') as f:
             json.dump(db, f, indent=2, sort_keys=True, separators=(',', ': '))
 
