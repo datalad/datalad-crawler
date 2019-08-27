@@ -14,7 +14,10 @@ from os.path import splitext, dirname, basename
 
 from datalad.utils import updated
 from datalad.dochelpers import exc_str
-from datalad.downloaders.base import DownloadError, UnhandledRedirectError
+from datalad.support.exceptions import (
+    DownloadError,
+    UnhandledRedirectError,
+)
 from datalad.downloaders.providers import Providers
 
 from logging import getLogger
