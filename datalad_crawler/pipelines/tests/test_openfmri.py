@@ -426,8 +426,8 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     eq_(set([f for f in all_files if not f.startswith('./.datalad/metadata/objects/')]), target_files)
 
     # check that -beh was committed in 2nd commit in incoming, not the first one
-    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1]))
-    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0]))
+    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1].hexsha))
+    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0].hexsha))
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):
