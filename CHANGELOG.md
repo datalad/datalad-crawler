@@ -9,6 +9,13 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.4.2 (Oct 30, 2019) -- Friends should stick together
+
+- BF: Prevent sorting error on missing attribute (#45)
+- BF: enclose "if else" into () since it has lower precedence than + (#43)
+- MNT: Adjust imports for compatibility with developmental DataLad (#53)
+- MNT: Update save() call for compatibility with new save (#42)
+
 ## 0.4.1 (Jun 20, 2019) -- Let us all stay friends
 
 - Compatibility layer with 0.12 series of DataLad changing API
