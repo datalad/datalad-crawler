@@ -16,8 +16,13 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
-0.4.2 (Oct 30, 2019) – Friends should stick together
-----------------------------------------------------
+0.4.3 (Oct 30, 2019) – … and help each other
+--------------------------------------------
+
+-  MNT: More changes for compatibility with developmental DataLad (#62)
+
+0.4.2 (Oct 30, 2019) – Friends should stick together …
+------------------------------------------------------
 
 -  BF: Prevent sorting error on missing attribute (#45)
 -  BF: enclose “if else” into () since it has lower precedence than +
