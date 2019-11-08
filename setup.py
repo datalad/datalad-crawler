@@ -59,6 +59,10 @@ requires = {
         'sphinx',
         'sphinx-rtd-theme',
     ],
+    'tests': [
+        'nose>=1.3.4',
+        'mock',
+    ],
 }
 requires['devel'] = sum(list(requires.values()), [])
 
