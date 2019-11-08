@@ -45,7 +45,7 @@ install:
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
   - cd ..; pip install -q codecov; cd -
-  - pip install -r requirements.txt
+  - pip install -r requirements-devel.txt
   # To heal bloody scrapy -- yoh guesses that pip isn't good enough to guarantee
   # specified versioning in the depends
   - pip install --upgrade attrs
