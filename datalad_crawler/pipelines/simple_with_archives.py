@@ -8,6 +8,8 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 """A pipeline for crawling a crcns dataset"""
 
+from ..consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
+from ..utils import flatten
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.misc import fix_url
@@ -15,17 +17,16 @@ from ..nodes.matches import a_href_match
 from ..nodes.misc import find_files
 from ..nodes.misc import sub
 from ..nodes.annex import Annexificator
-from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.strings import get_replacement_dict
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
-lgr = getLogger("datalad.crawler.pipelines.kaggle")
+lgr = getLogger("datalad.crawler.pipelines.simple_with_archives")
 
 
 def pipeline(url=None,
-             a_href_match_='.*/download/.*\.(tgz|tar.*|zip)',
+             a_href_match_='.*/download/.*\.(tgz|tar.*|zip|gz)',
              tarballs=True,
              datalad_downloader=False,
              use_current_dir=False,
@@ -33,7 +34,9 @@ def pipeline(url=None,
              rename=None,
              backend='MD5E',
              add_archive_leading_dir=False,
+             archives_re="\.(zip|tgz|tar(\..+)?)$",
              annex=None,
+             add_annex_to_incoming_pipeline=False,
              incoming_pipeline=None):
     """Pipeline to crawl/annex a simple web page with some tarballs on it
     
@@ -44,9 +47,6 @@ def pipeline(url=None,
 
     if not isinstance(leading_dirs_depth, int):
         leading_dirs_depth = int(leading_dirs_depth)
-
-    if not tarballs:
-        raise NotImplementedError("yet to simplify for no tarballs case")
 
     lgr.info("Creating a pipeline to crawl data files from %s", url)
     if annex is None:
@@ -63,6 +63,22 @@ def pipeline(url=None,
             special_remotes=special_remotes,
             largefiles="exclude=README* and exclude=LICENSE*"
         )
+        if incoming_pipeline:
+            # if incoming pipeline already has an Annexificator, it could cause
+            # weird or incorrect behavior unless it was somehow VERY intentional
+            # So we will check and issue a warning if any node is an Annexificator
+            annexificators = [
+                n for n in flatten(incoming_pipeline)
+                if isinstance(n, Annexificator)
+            ]
+            if annexificators:
+                lgr.warning(
+                    "incoming_pipeline already contains annexificator(s): %s. "
+                    "Most likely you intended to provide annex= option into "
+                    "this pipeline with the used in incoming_pipeline Annexificator. "
+                    "Otherwise things might not work as intended",
+                    ', '.join(map(repr, annexificators))
+                )
 
     if url:
         assert not incoming_pipeline
@@ -78,6 +94,8 @@ def pipeline(url=None,
     else:
         # no URL -- nothing to crawl -- but then should have been provided
         assert incoming_pipeline
+        if add_annex_to_incoming_pipeline:
+            incoming_pipeline.append(annex)
 
 
     # TODO: we could just extract archives processing setup into a separate pipeline template
@@ -90,7 +108,7 @@ def pipeline(url=None,
         [   # nested pipeline so we could skip it entirely if nothing new to be merged
             annex.merge_branch('incoming', strategy='theirs', commit=False),  #, skip_no_changes=False),
             [   # Pipeline to augment content of the incoming and commit it to master
-                find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
+                find_files(archives_re, fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
                 annex.add_archive_content(
                     existing='archive-suffix',
                     # Since inconsistent and seems in many cases no leading dirs to strip, keep them as provided

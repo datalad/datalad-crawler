@@ -13,6 +13,7 @@ from datalad.tests.utils import known_failure_direct_mode
 
 import os
 from glob import glob
+import os.path as op
 from os.path import join as opj
 from os.path import exists
 from mock import patch
@@ -25,27 +26,36 @@ from ...nodes.misc import Sink, assign, range_node, interrupt_if
 from ...nodes.annex import Annexificator, initiate_dataset
 from ...pipeline import load_pipeline_from_module
 
+from datalad.support.external_versions import external_versions
 from datalad.support.stats import ActivityStats
 from datalad.support.gitrepo import GitRepo
 from datalad.support.annexrepo import AnnexRepo
 
-from datalad.api import clean
-from datalad.utils import chpwd
-from datalad.utils import find_files
-from datalad.utils import swallow_logs
-from datalad.tests.utils import integration
-from datalad.tests.utils import (with_tree, File)
-from datalad.tests.utils import SkipTest
-from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from datalad.tests.utils import assert_in, assert_not_in
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git
-from datalad.tests.utils import ok_clean_git
+from datalad.api import (
+    clean,
+    Dataset,
+)
+from datalad.utils import (
+    chpwd,
+    find_files,
+    swallow_logs,
+)
+from datalad.tests.utils import (
+    assert_in, assert_not_in,
+    eq_, assert_not_equal, ok_, assert_raises,
+    File,
+    integration,
+    ok_clean_git,
+    ok_file_has_content,
+    ok_file_under_git,
+    serve_path_via_http,
+    skip_if,
+    skip_if_no_module,
+    skip_if_no_network,
+    use_cassette,
+    with_tempfile,
+    with_tree,
+)
 
 from .. import openfmri
 from ..openfmri import pipeline as ofpipeline
@@ -202,7 +212,6 @@ _versioned_files = """
 @with_tempfile
 @with_tempfile
 @known_failure_direct_mode  #FIXME
-@known_failure_v6  #FIXME
 def test_openfmri_addperms(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
@@ -251,6 +260,8 @@ def test_openfmri_addperms(ind, topurl, outd, clonedir):
 @with_tempfile
 @known_failure_direct_mode  #FIXME
 @known_failure_v6  #FIXME
+# unresolved mystery:  https://github.com/datalad/datalad-crawler/issues/55
+@skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0')
 def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
@@ -260,12 +271,23 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         path=outd,
         data_fields=['dataset'])({'dataset': 'ds666'}))
 
+    repo = AnnexRepo(outd, create=False)  # to be used in the checks
+    # Since datalad 0.11.2 all .metadata/objects go under annex.
+    # Here we have a test where we force drop all annexed content,
+    # to mitigate that let's place all metadata under git
+    dotdatalad_attributes_file = opj('.datalad', '.gitattributes')
+    repo.set_gitattributes(
+        [('metadata/objects/**', {'annex.largefiles': '(nothing)'})],
+        dotdatalad_attributes_file
+    )
+    # --amend so we do not cause change in # of commits below
+    repo.commit("gitattributes", files=dotdatalad_attributes_file, options=['--amend'])
+
     with chpwd(outd):
         pipeline = ofpipeline('ds666', versioned_urls=False, topurl=topurl)
         out = run_pipeline(pipeline)
     eq_(len(out), 1)
 
-    repo = AnnexRepo(outd, create=False)  # to be used in the checks
     # Inspect the tree -- that we have all the branches
     branches = {'master', 'incoming', 'incoming-processed', 'git-annex'}
     eq_(set(repo.get_branches()), branches)
@@ -308,17 +330,24 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 6)
-    eq_(len(commits_l['incoming']), 6)
-    eq_(len(commits['incoming-processed']), 9)
-    eq_(len(commits_l['incoming-processed']), 6)
+
     # all commits out there:
     # backend set, dataset init, crawler init
+    #   (2 or 3 commits, depending on create variant)
     # + 3*(incoming, processed, merge)
-    # + 3*aggregate-metadata update + 2*remove of obsolete metadata object files
+    # + 3*aggregate-metadata update
     #   - 1 since now that incoming starts with master, there is one less merge
-    eq_(len(commits['master']), 16)
-    eq_(len(commits_l['master']), 11)
+    # In --incremental mode there is a side effect of absent now
+    #   2*remove of obsolete metadata object files,
+    #     see https://github.com/datalad/datalad/issues/2772
+    ncommits_master = len(commits['master'])
+    assert_in(ncommits_master, [13, 14])
+    assert_in(len(commits_l['master']), [8, 9])
+
+    eq_(len(commits['incoming']), ncommits_master - 8)
+    eq_(len(commits_l['incoming']), ncommits_master - 8)
+    eq_(len(commits['incoming-processed']), ncommits_master - 5)
+    eq_(len(commits_l['incoming-processed']), ncommits_master - 8)
 
     # Check tags for the versions
     eq_(out[0]['datalad_stats'].get_total().versions, ['1.0.0', '1.0.1'])
@@ -328,7 +357,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
 
     # Ben: The tagged ones currently are the ones with the message
     # '[DATALAD] dataset aggregate metadata update\n':
-    eq_(repo_tags[0]['hexsha'], commits_l['master'][-5].hexsha)  # next to the last one
+    eq_(repo_tags[0]['hexsha'], commits_l['master'][4].hexsha)  # next to the last one
     eq_(repo_tags[-1]['hexsha'], commits_l['master'][0].hexsha)  # the last one
 
     def hexsha(l):
@@ -345,9 +374,9 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # parents are:
     # commit "[DATALAD] dataset aggregate metadata update\n" in commits_l['master'] and
     # commit "[DATALAD] Added files from extracted archives\n\nFiles processed: 6\n renamed: 2\n +annex: 3\nBranches merged: incoming->incoming-processed\n" in commits_l['incoming-processed']
-    eq_(hexsha(commits_l['master'][2].parents), (commits_l['master'][3].hexsha,
+    eq_(hexsha(commits_l['master'][1].parents), (commits_l['master'][2].hexsha,
                                                  commits_l['incoming-processed'][0].hexsha))
-    eq_(hexsha(commits_l['master'][5].parents), (commits_l['master'][6].hexsha,
+    eq_(hexsha(commits_l['master'][3].parents), (commits_l['master'][4].hexsha,
                                                  commits_l['incoming-processed'][1].hexsha))
 
     with chpwd(outd):
@@ -359,7 +388,17 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     ok_file_under_git(opj(outd, 'changelog.txt'), annexed=False)
     ok_file_under_git(t1w_fpath, annexed=True)
 
-    from datalad.metadata.metadata import agginfo_relpath
+    try:
+        # this is the new way
+        from datalad.metadata.metadata import get_ds_aggregate_db_locations
+        ds = Dataset('.')
+        dbloc, objbase = get_ds_aggregate_db_locations(ds)
+        dbloc = op.relpath(dbloc, start=ds.path)
+    except ImportError:
+        # this stopped working in early 2019 versions of datalad
+        from datalad.metadata.metadata import agginfo_relpath
+        dbloc = agginfo_relpath
+
     target_files = {
         './.datalad/config',
         './.datalad/crawl/crawl.cfg',
@@ -368,7 +407,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
         './.datalad/crawl/statuses/incoming.json',
         './.datalad/crawl/versions/incoming.json',
         './changelog.txt', './sub-1/anat/sub-1_T1w.dat', './sub-1/beh/responses.tsv',
-        './' + agginfo_relpath,
+        './' + dbloc,
     }
     target_incoming_files = {
         '.gitattributes',  # we marked default backend right in the incoming
@@ -387,8 +426,8 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     eq_(set([f for f in all_files if not f.startswith('./.datalad/metadata/objects/')]), target_files)
 
     # check that -beh was committed in 2nd commit in incoming, not the first one
-    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1]))
-    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0]))
+    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1].hexsha))
+    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0].hexsha))
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):
@@ -537,17 +576,19 @@ def test_openfmri_pipeline2(ind, topurl, outd):
     commits = {b: list(repo.get_branch_commits(b)) for b in branches}
     commits_hexsha = {b: list(repo.get_branch_commits(b, value='hexsha')) for b in branches}
     commits_l = {b: list(repo.get_branch_commits(b, limit='left-only')) for b in branches}
-    eq_(len(commits['incoming']), 4)
-    eq_(len(commits_l['incoming']), 4)
-    eq_(len(commits['incoming-processed']), 5)
-    eq_(len(commits_l['incoming-processed']), 4)
 
     # all commits out there:
     # backend set, dataset init, crawler, init, incoming (shares with master -1),
+    #   (2 or 3 commits, depending on create variant)
     # incoming-processed, merge, aggregate metadata:
-    eq_(len(commits['master']), 6)
-    # backend set, dataset init, init, merge, aggregate metadata:
-    eq_(len(commits_l['master']), 5)
+    ncommits_master = len(commits['master'])
+    assert_in(ncommits_master, [5, 6])
+    assert_in(len(commits_l['master']), [4, 5])
+
+    eq_(len(commits['incoming']), ncommits_master - 2)
+    eq_(len(commits_l['incoming']), ncommits_master - 2)
+    eq_(len(commits['incoming-processed']), ncommits_master - 1)
+    eq_(len(commits_l['incoming-processed']), ncommits_master - 2)
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):

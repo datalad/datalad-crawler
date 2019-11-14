@@ -36,9 +36,8 @@ lgr = getLogger("datalad.crawler.pipelines.crcns")
 def fetch_datacite_metadata():
     import json
     # CRCNS.org is publisher-id "cdl.ucbcrcns"
-    arx = 'http://search.datacite.org/api?q=datacentre_symbol:cdl.ucbcrcns' \
-          '&fl=doi,minted,updated,xml&fq=has_metadata:true&fq=is_active:true' \
-          '&rows=1000&start=0&sort=updated+asc&wt=json'
+    # We request all of them at once
+    arx = 'https://api.datacite.org/works?data-center-id=cdl.ucbcrcns&page%5Bsize%5D=1000'
     text = get_cached_url_content(arx, name='crcns', maxage=1)
     return json.loads(text)
 
@@ -70,14 +69,22 @@ def get_metadata(dataset=None):
     rj = fetch_datacite_metadata()
 
     all_datasets = {}
-    for i, json_ in enumerate(rj['response']['docs']):
-        json_xml = json_['xml']
+    records_with_empty_xmls = {}
+    for i, json_ in enumerate(rj['data']):
+        json_xml = json_['attributes']['xml']
         if isinstance(json_xml, text_type):
             json_xml = json_xml.encode()
+
+        if not json_xml:
+            records_with_empty_xmls[i] = json_
+            lgr.debug("Empty xml in record #%d, skipping for now", i)
+            continue
+
         xml_ = base64.decodestring(json_xml).decode('utf-8')
         reg = re.search('AlternativeTitle.?>CRCNS.org ([^<]*)<', xml_)
 
         if not reg:
+            import pdb; pdb.set_trace()
             lgr.warning("Failed to determine AlternativeTitle within %s", xml_)
             continue
 
@@ -96,6 +103,12 @@ def get_metadata(dataset=None):
                         dataset_)
         all_datasets[dataset_] = dataset_meta
 
+    if dataset and records_with_empty_xmls:
+        lgr.warning(
+            "Found no record for dataset %s although there were %d records "
+            "with empty xml field",
+            dataset, len(records_with_empty_xmls)
+        )
     return None if dataset else all_datasets
 
 

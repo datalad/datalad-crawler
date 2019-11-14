@@ -23,8 +23,8 @@ env:
     - COVERAGE=coverage
     - DATALAD_DATASETS_TOPURL=http://datasets-tests.datalad.org
   matrix:
-    - DATALAD_REPO_DIRECT=yes
     - DATALAD_REPO_VERSION=5
+    - DATALAD_REPO_VERSION=6
 
 
 before_install:
@@ -36,7 +36,7 @@ before_install:
   - travis_retry sudo apt-get install eatmydata  # to speedup some installations
   # install git-annex with the relevant bits
   # no recommends to avoid inheriting the entire multimedia stack
-  - travis_retry sudo eatmydata apt-get install --no-install-recommends git-annex-standalone aria2 git-remote-gcrypt lsof gnupg nocache
+  - travis_retry sudo eatmydata apt-get install --no-install-recommends git-annex-standalone aria2 git-remote-gcrypt lsof gnupg nocache p7zip-full
 
 install:
   # Install standalone build of git-annex for the recent enough version
@@ -45,7 +45,10 @@ install:
   - git config --global user.email "test@travis.land"
   - git config --global user.name "Travis Almighty"
   - cd ..; pip install -q codecov; cd -
-  - pip install -r requirements.txt
+  - pip install -r requirements-devel.txt
+  # To heal bloody scrapy -- yoh guesses that pip isn't good enough to guarantee
+  # specified versioning in the depends
+  - pip install --upgrade attrs
   #- pip install 'sphinx>=1.6.2'
   # So we could test under sudo -E with PATH pointing to installed location
   - sudo sed -i -e 's/^Defaults.*secure_path.*$//' /etc/sudoers
@@ -59,7 +62,7 @@ script:
   # -A "$NOSE_SELECTION_OP(integration or usecase or slow)"
   - http_proxy=
     PATH=$PWD/tools/coverage-bin:$PATH
-    $NOSE_WRAPPER `which nosetests` $NOSE_OPTS
+    $NOSE_WRAPPER python -m nose $NOSE_OPTS
       -v
       --with-doctest
       --with-cov --cover-package datalad_crawler

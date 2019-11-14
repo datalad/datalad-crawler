@@ -7,7 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad.tests.utils import known_failure_v6
 from datalad.tests.utils import known_failure_direct_mode
 
 
@@ -15,10 +14,12 @@ from os import listdir
 from os.path import join as opj, exists, lexists, basename
 from collections import OrderedDict
 from datalad.tests.utils import with_tempfile, eq_, ok_, SkipTest
+import logging
 from mock import patch
 
 from ..annex import initiate_dataset
 from ..annex import Annexificator
+from datalad.utils import swallow_logs
 from datalad.tests.utils import assert_equal, assert_in
 from datalad.tests.utils import assert_raises
 from datalad.tests.utils import assert_true, assert_false
@@ -27,6 +28,7 @@ from datalad.tests.utils import ok_file_under_git
 from datalad.tests.utils import ok_file_has_content
 from datalad.tests.utils import assert_cwd_unchanged
 from datalad.tests.utils import put_file_under_git
+from datalad.tests.utils import skip_if
 from ...pipeline import load_pipeline_from_config
 from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH, DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.stats import ActivityStats
@@ -80,6 +82,34 @@ def test_initiate_dataset(path, path2):
     raise SkipTest("TODO much more")
 
 
+@with_tempfile(mkdir=True)
+@known_failure_direct_mode
+def test_initiate_dataset_new_create_warns(path):
+    try:
+        from datalad.distribution import create
+    except ImportError:
+        # We are on a version of DataLad with the new create.
+        expected_backend = "MD5E"
+        expect_warning = True
+    else:
+        expected_backend = "SHA256E"
+        expect_warning = False
+
+    path = opj(path, 'test')
+    with swallow_logs(new_level=logging.WARNING) as cml:
+        list(initiate_dataset('template', 'testdataset',
+                              backend="SHA256E", path=path)())
+        if expect_warning:
+            assert_in("datalad.repo.backend", cml.out)
+    # DataLad's new create honors datalad.repo.backend rather than the
+    # crawler-specific one.
+    fname = 'test.dat'
+    f = opj(path, fname)
+    annex = put_file_under_git(f, content="test", annexed=True)
+    eq_(annex.get_file_backend(f), expected_backend)
+
+
+
 @with_tree(tree=[
     ('d1', (
         ('1.dat', '1.dat load'),
@@ -102,7 +132,6 @@ def _test_annex_file(mode, topdir, topurl, outdir):
     # be a batched process
     if not annex.repo.fake_dates_enabled:
         assert_equal(len(annex.repo._batched), 1)
-        assert_raises(AssertionError, ok_file_under_git, tfile, annexed=True)
     # if we finalize, it should flush batched annexes and commit
     list(annex.finalize()({}))
     assert(lexists(tfile))
@@ -175,21 +204,20 @@ def _test_annex_file(mode, topdir, topurl, outdir):
 def test_annex_file():
     for mode in ('full', 'fast', 'relaxed',):
         if mode in ('full', 'fast'):
-            yield known_failure_direct_mode(known_failure_v6(_test_annex_file)), mode  #FIXME
+            yield known_failure_direct_mode(_test_annex_file), mode  #FIXME
         else:
-            yield known_failure_v6(_test_annex_file), mode  #FIXME
+            yield _test_annex_file, mode
 
 
 @assert_cwd_unchanged()  # we are passing annex, not chpwd
 @with_tree(tree={'1.tar': {'file.txt': 'load',
                            '1.dat': 'load2'}})
-def _test_add_archive_content_tar(direct, repo_path):
+def test_add_archive_content_tar(repo_path):
     mode = 'full'
     special_remotes = [DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE]
     annex = Annexificator(path=repo_path,
                           allow_dirty=True,
                           mode=mode,
-                          direct=direct,
                           special_remotes=special_remotes,
                           largefiles="exclude=*.txt and exclude=SOMEOTHER")
     output_add = list(annex({'filename': '1.tar'}))  # adding it to annex
@@ -212,22 +240,12 @@ def _test_add_archive_content_tar(direct, repo_path):
     assert_equal(output_addarchive,
                  [{'datalad_stats': ActivityStats(add_annex=1, add_git=1, files=3, renamed=2),
                    'filename': '1.tar'}])
-    if not direct:  # Notimplemented otherwise
-        assert_true(annex.repo.dirty)
+    assert_true(annex.repo.dirty)
     annex.repo.commit("added")
     ok_file_under_git(annex.repo.path, 'file.txt', annexed=False)
     ok_file_under_git(annex.repo.path, '1.dat', annexed=True)
     assert_false(lexists(opj(repo_path, '1.tar')))
-    if not direct:  # Notimplemented otherwise
-        assert_false(annex.repo.dirty)
-
-
-def test_add_archive_content_tar():
-    #FIXME: This doesn't really make sense:
-    # 1. We have a dedicated direct mode test build
-    # 2. On a FS where direct mode is enforced, we can't switch
-    for direct in (True, False):
-        yield known_failure_v6(_test_add_archive_content_tar), direct  #FIXME: the usual thing: in V6 the repo is dirty in the end, since there are files in git falsely marked 'modified'
+    assert_false(annex.repo.dirty)
 
 
 @assert_cwd_unchanged()

@@ -22,7 +22,7 @@ from datalad.support.s3 import get_key_url
 from datalad.support.network import iso8601_to_epoch
 from datalad.downloaders.providers import Providers
 from datalad.downloaders.s3 import S3Downloader
-from datalad.downloaders.base import TargetFileAbsent
+from datalad.support.exceptions import TargetFileAbsent
 from ..dbs.versions import SingleVersionDB
 
 from logging import getLogger
@@ -145,7 +145,7 @@ class crawl_s3(object):
         # In real life last_modified should be enough, but life can be as tough as we made it for 'testing'
         def kf(k, f):
             """Some elements, such as Prefix wouldn't have any of attributes to sort by"""
-            return getattr(k, f, None)
+            return getattr(k, f, '')
         # So ATM it would sort Prefixes first, but that is not necessarily correct...
         # Theoretically the only way to sort Prefix'es with the rest is traverse that Prefix
         # and take latest last_modified there but it is expensive, so -- big TODO if ever ;)
