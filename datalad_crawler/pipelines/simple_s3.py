@@ -53,6 +53,7 @@ def pipeline(bucket,
              backend='MD5E',
              drop=False,
              drop_force=False,
+             drop_immediately=False,
              strategy='commit-versions',
              exclude=None,
              **kwargs):
@@ -77,6 +78,8 @@ def pipeline(bucket,
       What strategy to use whenever processing "delete" event, See `crawl_s3` node for more information.
     drop : bool, optional
       Drop all the files whenever done crawling
+    drop_immediately: bool, optional
+      Drop each file right after downloading it
     exclude : str, optional
       Regular expression to be passed to s3_crawl to exclude some files
     **kwargs:
@@ -98,6 +101,7 @@ def pipeline(bucket,
     allow_dirty = assure_bool(allow_dirty)
     drop = assure_bool(drop)
     drop_force = assure_bool(drop_force)
+    drop_immediately = assure_bool(drop_immediately)
 
     if not to_http:
         annex_kw['special_remotes'] = [DATALAD_SPECIAL_REMOTE]
@@ -108,6 +112,7 @@ def pipeline(bucket,
         no_annex=no_annex,
         skip_problematic=skip_problematic,
         allow_dirty=allow_dirty,
+        batch_add=not drop_immediately,
         # Primary purpose of this one is registration of all URLs with our
         # upcoming "ultimate DB" so we don't get to git anything
         # largefiles="exclude=CHANGES* and exclude=changelog.txt and exclude=dataset_description.json and exclude=README* and exclude=*.[mc]"
@@ -116,8 +121,12 @@ def pipeline(bucket,
 
     s3_actions = {
         'commit': annex.finalize(tag=tag),
-        'annex': annex
+        'annex': [annex]
     }
+
+    if drop_immediately:
+        s3_actions['annex'].append(annex.drop(force=drop_force))
+
     s3_switch_kw = {}
     recursive = True
     if directory:
@@ -159,7 +168,7 @@ def pipeline(bucket,
                                   ok_missing=True)]
 
     incoming_pipeline.append(switch('datalad_action', s3_actions, **s3_switch_kw))
-
+    
     if archives:
         pipeline = swa_pipeline(incoming_pipeline=incoming_pipeline, annex=annex,
                                 **kwargs)
