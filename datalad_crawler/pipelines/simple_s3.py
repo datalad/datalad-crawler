@@ -112,7 +112,7 @@ def pipeline(bucket,
         no_annex=no_annex,
         skip_problematic=skip_problematic,
         allow_dirty=allow_dirty,
-		batch_add=not drop_immediately,
+        batch_add=not drop_immediately,
         # Primary purpose of this one is registration of all URLs with our
         # upcoming "ultimate DB" so we don't get to git anything
         # largefiles="exclude=CHANGES* and exclude=changelog.txt and exclude=dataset_description.json and exclude=README* and exclude=*.[mc]"
