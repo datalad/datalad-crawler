@@ -47,6 +47,27 @@ class LorisCandidateAPI:
             filename = file_["Filename"]
             yield updated(data, {"url": data["visit-url"] + "/" + filename})
 
+    def instruments(self, data):
+        response = json.loads(data["response"])
+        for instrument in response["Instruments"]:
+            yield updated(data, {"instrument-url": data["visit-url"] + "/" + instrument})
+    
+    def instrument_data(self, data):
+        if data == None:
+            return
+        else:
+            response = json.loads(data["response"])
+            meta = response["Meta"]
+            filename = f"{meta['Candidate']}_{meta['Visit']}_{meta['Instrument']}"
+            
+            if os.path.lexists(f"instruments/{filename}"):
+                os.unlink(f"instruments/{filename}")
+            with open(f"instruments/{filename}", "w+") as f_out:
+                os.chmod(f"instruments/{filename}", 0o775)
+                json.dump(response[meta["Instrument"]], f_out)
+                yield {"filename": filename}
+         
+
 
 def pipeline(url=None):
     """Pipeline to crawl/annex a LORIS database via the LORIS Candidate API.
@@ -56,8 +77,26 @@ def pipeline(url=None):
     """
 
     lgr.info("Creating a pipeline to crawl data files from %s", url)
-    annex = Annexificator(
-        create=False,
+
+    image_annex = Annexificator(
+        path="images",
+        create=True,
+        statusdb="json",
+        special_remotes=[DATALAD_SPECIAL_REMOTE],
+        options=[
+            "-c",
+            "annex.largefiles="
+            "exclude=Makefile and exclude=LICENSE* and exclude=ISSUES*"
+            " and exclude=CHANGES* and exclude=README*"
+            " and exclude=*.[mc] and exclude=dataset*.json"
+            " and exclude=*.txt"
+            " and exclude=*.tsv",
+        ],
+    ) 
+
+    instrument_annex = Annexificator(
+        path="instruments",
+        create=True,
         statusdb="json",
         special_remotes=[DATALAD_SPECIAL_REMOTE],
         options=[
@@ -70,6 +109,7 @@ def pipeline(url=None):
             " and exclude=*.tsv",
         ],
     )
+
     api = LorisCandidateAPI(url)
 
     return [
@@ -82,9 +122,20 @@ def pipeline(url=None):
                     add_url_suffix("visit-url", "/images"),
                     crawl_url(input="visit-url"),
                     api.images,
-                    annex,
+                    image_annex,
+                ],
+                [
+                    # Crawl candidate insturments
+                    add_url_suffix("visit-url", "/instruments"),
+                    crawl_url(input="visit-url"),
+                    api.instruments,
+                    crawl_url(input="instrument-url"),
+                    api.instrument_data,
+                    instrument_annex,
                 ],
             ],
         ],
-        annex.finalize(),
+        image_annex.finalize(),
+        instrument_annex.finalize()
     ]
+
