@@ -9,6 +9,13 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.4.4 (Nov 20, 2019) -- ... despite some mocking
+
+- ENH: `s3_simple` pipeline got additional option `drop_immediately` to
+  drop files immediately upon having them annexed
+- RF: `mock` is explicitly listed as a dependency for testing since DataLad
+  0.12.x will be PY3 only and could use built-in `unittest.mock`
+
 ## 0.4.3 (Oct 30, 2019) -- ... and help each other
 
 - MNT: More changes for compatibility with developmental DataLad (#62)
