@@ -822,13 +822,22 @@ class Annexificator(object):
                     lgr.debug("Skipping the merge")
                     return
 
+            # compatibility kludge for API change post DataLad 0.12.2
+            def get_branch_commits(repo, branch, limit, stop):
+                if hasattr(repo, 'get_branch_commits_'):
+                    return repo.get_branch_commits_(
+                        branch, limit, stop)
+                else:
+                    return repo.get_branch_commits(
+                        branch, limit, stop, value='hexsha')
+
             if one_commit_at_a_time:
                 all_to_merge = list(
-                    self.repo.get_branch_commits(
+                    get_branch_commits(
+                        self.repo,
                         branch,
                         limit='left-only',
-                        stop=last_merged_checksum,
-                        value='hexsha'))[::-1]
+                        stop=last_merged_checksum))[::-1]
             else:
                 all_to_merge = [branch]
 
