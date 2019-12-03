@@ -26,6 +26,7 @@ from ...nodes.misc import Sink, assign, range_node, interrupt_if
 from ...nodes.annex import Annexificator, initiate_dataset
 from ...pipeline import load_pipeline_from_module
 
+from datalad.support.external_versions import external_versions
 from datalad.support.stats import ActivityStats
 from datalad.support.gitrepo import GitRepo
 from datalad.support.annexrepo import AnnexRepo
@@ -34,22 +35,27 @@ from datalad.api import (
     clean,
     Dataset,
 )
-from datalad.utils import chpwd
-from datalad.utils import find_files
-from datalad.utils import swallow_logs
-from datalad.tests.utils import integration
-from datalad.tests.utils import (with_tree, File)
-from datalad.tests.utils import SkipTest
-from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from datalad.tests.utils import assert_in, assert_not_in
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git
-from datalad.tests.utils import ok_clean_git
+from datalad.utils import (
+    chpwd,
+    find_files,
+    swallow_logs,
+)
+from datalad.tests.utils import (
+    assert_in, assert_not_in,
+    eq_, assert_not_equal, ok_, assert_raises,
+    File,
+    integration,
+    ok_clean_git,
+    ok_file_has_content,
+    ok_file_under_git,
+    serve_path_via_http,
+    skip_if,
+    skip_if_no_module,
+    skip_if_no_network,
+    use_cassette,
+    with_tempfile,
+    with_tree,
+)
 
 from .. import openfmri
 from ..openfmri import pipeline as ofpipeline
@@ -254,6 +260,8 @@ def test_openfmri_addperms(ind, topurl, outd, clonedir):
 @with_tempfile
 @known_failure_direct_mode  #FIXME
 @known_failure_v6  #FIXME
+# unresolved mystery:  https://github.com/datalad/datalad-crawler/issues/55
+@skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0')
 def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
@@ -418,8 +426,8 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     eq_(set([f for f in all_files if not f.startswith('./.datalad/metadata/objects/')]), target_files)
 
     # check that -beh was committed in 2nd commit in incoming, not the first one
-    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1]))
-    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0]))
+    assert_not_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][-1].hexsha))
+    assert_in('ds666-beh_R1.0.1.tar.gz', repo.get_files(commits_l['incoming'][0].hexsha))
 
     # rerun pipeline -- make sure we are on the same in all branches!
     with chpwd(outd):
