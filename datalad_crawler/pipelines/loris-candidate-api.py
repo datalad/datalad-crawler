@@ -39,34 +39,47 @@ class LorisCandidateAPI:
     def visits(self, data):
         response = json.loads(data["response"])
         for visit in response["Visits"]:
-            yield updated(data, {"visit-url": self.url + "/" + visit})
+
+            if not os.path.exists(visit):
+                os.mkdir(visit)
+
+            yield updated(data, 
+                    {"url": self.url + "/" + visit,
+                     "visit": visit,
+                    }
+                )
 
     def images(self, data):
         response = json.loads(data["response"])
         for file_ in response["Files"]:
             filename = file_["Filename"]
-            yield updated(data, {"url": data["visit-url"] + "/" + filename})
+            yield updated(data, 
+                    {"url": data["url"] + "/" + filename,
+                     "filename": f"{data['visit']}/images/{filename}",
+                    }
+                )
 
     def instruments(self, data):
         response = json.loads(data["response"])
         for instrument in response["Instruments"]:
-            yield updated(data, {"instrument-url": data["visit-url"] + "/" + instrument})
+            yield updated(data, {"url": data["url"] + "/" + instrument})
     
     def instrument_data(self, data):
-        if data == None:
-            return
-        else:
-            response = json.loads(data["response"])
-            meta = response["Meta"]
-            filename = f"{meta['Candidate']}_{meta['Visit']}_{meta['Instrument']}"
-            
-            if os.path.lexists(f"instruments/{filename}"):
-                os.unlink(f"instruments/{filename}")
-            with open(f"instruments/{filename}", "w+") as f_out:
-                os.chmod(f"instruments/{filename}", 0o775)
-                json.dump(response[meta["Instrument"]], f_out)
-                yield {"filename": filename}
-         
+        response = json.loads(data["response"])
+        meta = response["Meta"]
+        filename = f"{meta['Candidate']}_{meta['Visit']}_{meta['Instrument']}"
+        
+        file_ = f"{data['visit']}/instruments/{filename}"
+
+        if not os.path.exists(f"{data['visit']}/instruments"):
+           os.mkdir(f"{data['visit']}/instruments")
+        if os.path.lexists(file_):
+            os.unlink(file_)
+
+        with open(file_, "w+") as f_out:
+            os.chmod(file_, 0o775)
+            json.dump(response[meta["Instrument"]], f_out)
+            yield {"filename": file_}
 
 
 def pipeline(url=None):
@@ -78,8 +91,7 @@ def pipeline(url=None):
 
     lgr.info("Creating a pipeline to crawl data files from %s", url)
 
-    image_annex = Annexificator(
-        path="images",
+    annex = Annexificator(
         create=True,
         statusdb="json",
         special_remotes=[DATALAD_SPECIAL_REMOTE],
@@ -94,22 +106,6 @@ def pipeline(url=None):
         ],
     ) 
 
-    instrument_annex = Annexificator(
-        path="instruments",
-        create=True,
-        statusdb="json",
-        special_remotes=[DATALAD_SPECIAL_REMOTE],
-        options=[
-            "-c",
-            "annex.largefiles="
-            "exclude=Makefile and exclude=LICENSE* and exclude=ISSUES*"
-            " and exclude=CHANGES* and exclude=README*"
-            " and exclude=*.[mc] and exclude=dataset*.json"
-            " and exclude=*.txt"
-            " and exclude=*.tsv",
-        ],
-    )
-
     api = LorisCandidateAPI(url)
 
     return [
@@ -119,23 +115,22 @@ def pipeline(url=None):
             [
                 [
                     # Crawl candidate images
-                    add_url_suffix("visit-url", "/images"),
-                    crawl_url(input="visit-url"),
+                    add_url_suffix("url", "/images"),
+                    crawl_url(),
                     api.images,
-                    image_annex,
+                    annex,
                 ],
                 [
                     # Crawl candidate insturments
-                    add_url_suffix("visit-url", "/instruments"),
-                    crawl_url(input="visit-url"),
+                    add_url_suffix("url", "/instruments"),
+                    crawl_url(),
                     api.instruments,
-                    crawl_url(input="instrument-url"),
+                    crawl_url(),
                     api.instrument_data,
-                    instrument_annex,
+                    annex,
                 ],
             ],
         ],
-        image_annex.finalize(),
-        instrument_annex.finalize()
+        annex.finalize(),
     ]
 
