@@ -61,38 +61,27 @@ class LorisCandidateAPI:
 
     def instruments(self, data):
         response = json.loads(data["response"])
-        for instrument in response["Instruments"]:
-            yield updated(data, {"url": data["url"] + "/" + instrument})
-    
-    def instrument_data(self, data):
-        response = json.loads(data["response"])
         meta = response["Meta"]
-        filename = f"{meta['Candidate']}_{meta['Visit']}_{meta['Instrument']}"
-        
-        file_ = f"{data['visit']}/instruments/{filename}"
+        for instrument in response["Instruments"]:
+            filename = f"{meta['CandID']}_{data['visit']}_{instrument}"
 
-        if not os.path.exists(f"{data['visit']}/instruments"):
-           os.mkdir(f"{data['visit']}/instruments")
-        if os.path.lexists(file_):
-            os.unlink(file_)
-
-        with open(file_, "w+") as f_out:
-            os.chmod(file_, 0o775)
-            json.dump(response[meta["Instrument"]], f_out)
-            yield {"filename": file_}
-
-
+            yield updated(data, 
+                    {"url": data["url"] + "/" + instrument,
+                     "filename": f"{data['visit']}/instruments/{filename}",
+                    }
+                )
+    
 def pipeline(url=None):
     """Pipeline to crawl/annex a LORIS database via the LORIS Candidate API.
     
-    It will crawl every file matching the format of the $API/candidates/$candID/
+    It will crawl every file matching the format of the $API/candidates/$CandID/
     endpoint as documented in the LORIS API.
     """
 
     lgr.info("Creating a pipeline to crawl data files from %s", url)
 
     annex = Annexificator(
-        create=True,
+        skip_problematic=True,
         statusdb="json",
         special_remotes=[DATALAD_SPECIAL_REMOTE],
         options=[
@@ -125,8 +114,6 @@ def pipeline(url=None):
                     add_url_suffix("url", "/instruments"),
                     crawl_url(),
                     api.instruments,
-                    crawl_url(),
-                    api.instrument_data,
                     annex,
                 ],
             ],
