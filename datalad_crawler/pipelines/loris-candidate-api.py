@@ -43,34 +43,35 @@ class LorisCandidateAPI:
             if not os.path.exists(visit):
                 os.mkdir(visit)
 
-            yield updated(data, 
-                    {"url": self.url + "/" + visit,
-                     "visit": visit,
-                    }
-                )
+            yield updated(data, {"url": self.url + "/" + visit, "visit": visit,})
 
     def images(self, data):
         response = json.loads(data["response"])
         for file_ in response["Files"]:
             filename = file_["Filename"]
-            yield updated(data, 
-                    {"url": data["url"] + "/" + filename,
-                     "filename": f"{data['visit']}/images/{filename}",
-                    }
-                )
+            yield updated(
+                data,
+                {
+                    "url": data["url"] + "/" + filename,
+                    "filename": "{}/images/{}".format(data["visit"], filename),
+                },
+            )
 
     def instruments(self, data):
         response = json.loads(data["response"])
         meta = response["Meta"]
         for instrument in response["Instruments"]:
-            filename = f"{meta['CandID']}_{data['visit']}_{instrument}"
+            filename = "{}_{}_{}".format(meta["CandID"], data["visit"], instrument)
 
-            yield updated(data, 
-                    {"url": data["url"] + "/" + instrument,
-                     "filename": f"{data['visit']}/instruments/{filename}",
-                    }
-                )
-    
+            yield updated(
+                data,
+                {
+                    "url": data["url"] + "/" + instrument,
+                    "filename": "{}/instruments/{}".format(data["visit"], filename),
+                },
+            )
+
+
 def pipeline(url=None):
     """Pipeline to crawl/annex a LORIS database via the LORIS Candidate API.
     
@@ -93,7 +94,7 @@ def pipeline(url=None):
             " and exclude=*.txt"
             " and exclude=*.tsv",
         ],
-    ) 
+    )
 
     api = LorisCandidateAPI(url)
 
@@ -120,4 +121,3 @@ def pipeline(url=None):
         ],
         annex.finalize(),
     ]
-
