@@ -132,6 +132,14 @@ class crawl_s3(object):
         if self.repo:
             versions_db = SingleVersionDB(self.repo)
             prev_version = versions_db.version
+            if prev_version and not prev_version.get('version-id', None):
+                # Situation might arise when a directory contains no files, only
+                # directories which we place into subdatasets
+                # see https://github.com/datalad/datalad-crawler/issues/68
+                # Workaround -- start from scratch
+                lgr.warning("stored version-id is empty. Crawling from the beginning")
+                prev_version = None
+                versions_db = None
         else:
             prev_version, versions_db = None, None
 
@@ -203,7 +211,7 @@ class crawl_s3(object):
         for e in versions_sorted + [None]:
             filename = e.name if e is not None else None
             if (self.strip_prefix and self.prefix):
-                 filename = _strip_prefix(filename, self.prefix)
+                filename = _strip_prefix(filename, self.prefix)
             if filename and self.exclude and re.search(self.exclude, filename):
                 stats.skipped += 1
                 continue
