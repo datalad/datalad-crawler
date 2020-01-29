@@ -139,7 +139,6 @@ class crawl_s3(object):
                 # Workaround -- start from scratch
                 lgr.warning("stored version-id is empty. Crawling from the beginning")
                 prev_version = None
-                versions_db = None
         else:
             prev_version, versions_db = None, None
 
