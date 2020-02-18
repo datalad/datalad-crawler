@@ -7,9 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad.tests.utils import known_failure_direct_mode
-
-
 from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
 from ..balsa import pipeline as ofpipeline, superdataset_pipeline
 import os
@@ -127,7 +124,6 @@ TEST_TREE1 = {
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 def test_balsa_extract_meta(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",
@@ -201,7 +197,6 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 def test_balsa_pipeline1(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",
@@ -317,7 +312,6 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 def test_balsa_pipeline2(ind, topurl, outd, clonedir):
     list(initiate_dataset(
         template="balsa",
