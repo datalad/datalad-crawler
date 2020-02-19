@@ -179,7 +179,11 @@ class initiate_dataset(object):
             sds = ds.get_superdataset(registered_only=False)
             if sds is not None:
                 lgr.debug("Adding %s as a subdataset to %s", ds, sds)
-                sds.add(ds.path, save=False)
+                sds.repo.add_submodule(
+                    str(ds.pathobj.relative_to(sds.pathobj)),
+                    url=None,
+                    name=None,
+                )
                 # this leaves the subdataset staged in the parent
             elif str(self.add_to_super) != 'auto':
                 raise ValueError(

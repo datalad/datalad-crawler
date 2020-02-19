@@ -8,8 +8,6 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 from datalad.tests.utils import known_failure_v6
-from datalad.tests.utils import known_failure_direct_mode
-
 
 import os
 from glob import glob
@@ -211,7 +209,6 @@ _versioned_files = """
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 def test_openfmri_addperms(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
@@ -258,7 +255,6 @@ def test_openfmri_addperms(ind, topurl, outd, clonedir):
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 @known_failure_v6  #FIXME
 # unresolved mystery:  https://github.com/datalad/datalad-crawler/issues/55
 @skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0')
@@ -543,7 +539,6 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
 )
 @serve_path_via_http
 @with_tempfile
-@known_failure_direct_mode  #FIXME
 @known_failure_v6  #FIXME
 def test_openfmri_pipeline2(ind, topurl, outd):
     # no versioned files -- should still work! ;)
