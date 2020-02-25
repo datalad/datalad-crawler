@@ -219,7 +219,9 @@ def test_balsa_pipeline1(ind, topurl, outd, clonedir):
     # but that one is different from incoming
     assert_not_equal(repo.get_hexsha('incoming'), repo.get_hexsha('incoming-processed'))
 
-    commits = {b: list(repo.get_branch_commits(b)) for b in branches}
+    get_branch_commits = repo.get_branch_commits_ \
+        if hasattr(repo, 'get_branch_commits_') else repo.get_branch_commits
+    commits = {b: list(get_branch_commits(b)) for b in branches}
     # all commits out there -- init ds + init crawler + 1*(incoming, processed)
     # The number of commits in master differs based on the create variant used
     # (the one DataLad's master makes only one commit).
