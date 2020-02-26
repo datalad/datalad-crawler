@@ -497,14 +497,15 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     for b in 'master', 'incoming-processed':
         # with non persistent DB we had no changes
         # eq_(repo.repo.branches[b].commit.diff(commits_hexsha_[b][0]), [])
-        eq_(repo.repo.branches[b].commit.diff(commits_hexsha_[b][0])[0].a_path,
-            '.datalad/crawl/statuses/incoming.json')
-    dincoming = repo.repo.branches['incoming'].commit.diff(commits_hexsha_['incoming'][0])
+        assert_in(
+            repo.pathobj / '.datalad/crawl/statuses/incoming.json',
+            repo.diff(b, commits_hexsha_[b][0])
+        )
+    dincoming = repo.diff('incoming', commits_hexsha_['incoming'][0])
     eq_(len(dincoming), 2)  # 2 diff objects -- 1 file removed, 1 statuses updated
-    eq_(set([d.a_path for d in dincoming]),
-        {'.datalad/crawl/statuses/incoming.json', 'ds666_R1.0.0.tar.gz'})
-    # since it seems to diff "from current to the specified", it will be listed as new_file
-    assert any(d.new_file for d in dincoming)
+    eq_(set(dincoming.keys()),
+        {repo.pathobj / '.datalad/crawl/statuses/incoming.json',
+         repo.pathobj / 'ds666_R1.0.0.tar.gz'})
 
     eq_(out[0]['datalad_stats'].get_total().removed, 1)
     assert_not_equal(commits_hexsha_, commits_hexsha_removed)
