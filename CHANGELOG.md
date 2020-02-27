@@ -9,6 +9,14 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.5.0 (Feb 27, 2020) -- Future is bright
+
+- DataLad 0.12 is now minimal version.  Codebase is now compatible with current
+  DataLad 0.12.2-293-gd5fcb4833
+  - uses less of GitPython functionality
+- OpenfMRI pipeline tests "relaxed" (no commit counts etc)
+- s3 node - be robust in case of no previous version-id known
+
 ## 0.4.4 (Nov 20, 2019) -- ... despite some mocking
 
 - ENH: `s3_simple` pipeline got additional option `drop_immediately` to
