@@ -7,9 +7,6 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad.tests.utils import known_failure_direct_mode
-
-
 from os import listdir
 from os.path import join as opj, exists, lexists, basename
 from collections import OrderedDict
@@ -55,7 +52,6 @@ def test_annexificator_no_git_if_dirty(outdir):
 
 @with_tempfile(mkdir=True)
 @with_tempfile()
-@known_failure_direct_mode  #FIXME
 def test_initiate_dataset(path, path2):
     dataset_path = opj(path, 'test')
     datas = list(initiate_dataset('template', 'testdataset', path=dataset_path)())
@@ -83,7 +79,6 @@ def test_initiate_dataset(path, path2):
 
 
 @with_tempfile(mkdir=True)
-@known_failure_direct_mode
 def test_initiate_dataset_new_create_warns(path):
     try:
         from datalad.distribution import create
@@ -124,15 +119,15 @@ def _test_annex_file(mode, topdir, topurl, outdir):
 
     input = {'url': "%sd1/1.dat" % topurl, 'filename': '1-copy.dat'}
     tfile = opj(outdir, '1-copy.dat')
-    expected_output = [input.copy()]   # nothing to be added/changed
+    # we add full filepath now
+    expected_output = [dict(filepath=opj(outdir, input['filename']), **input)]
     output = list(annex(input))
-    assert_equal(output, expected_output)
+    assert_equal(expected_output, output)
 
     # addurl is batched, and we haven't forced annex flushing so there should
     # be a batched process
     if not annex.repo.fake_dates_enabled:
         assert_equal(len(annex.repo._batched), 1)
-        assert_raises(AssertionError, ok_file_under_git, tfile, annexed=True)
     # if we finalize, it should flush batched annexes and commit
     list(annex.finalize()({}))
     assert(lexists(tfile))
@@ -204,10 +199,7 @@ def _test_annex_file(mode, topdir, topurl, outdir):
 
 def test_annex_file():
     for mode in ('full', 'fast', 'relaxed',):
-        if mode in ('full', 'fast'):
-            yield known_failure_direct_mode(_test_annex_file), mode  #FIXME
-        else:
-            yield _test_annex_file, mode
+        yield _test_annex_file, mode
 
 
 @assert_cwd_unchanged()  # we are passing annex, not chpwd
@@ -222,7 +214,7 @@ def test_add_archive_content_tar(repo_path):
                           special_remotes=special_remotes,
                           largefiles="exclude=*.txt and exclude=SOMEOTHER")
     output_add = list(annex({'filename': '1.tar'}))  # adding it to annex
-    assert_equal(output_add, [{'filename': '1.tar'}])
+    assert_equal(output_add, [{'filename': '1.tar', 'filepath': opj(repo_path, '1.tar')}])
 
     if external_versions['cmd:annex'] >= '6.20170208':
         # should have fixed remotes
@@ -240,7 +232,8 @@ def test_add_archive_content_tar(repo_path):
             strip_leading_dirs=True,)(output_add[0]))
     assert_equal(output_addarchive,
                  [{'datalad_stats': ActivityStats(add_annex=1, add_git=1, files=3, renamed=2),
-                   'filename': '1.tar'}])
+                   'filename': '1.tar',
+                   'filepath': opj(repo_path, '1.tar')}])
     assert_true(annex.repo.dirty)
     annex.repo.commit("added")
     ok_file_under_git(annex.repo.path, 'file.txt', annexed=False)
@@ -253,7 +246,6 @@ def test_add_archive_content_tar(repo_path):
 @with_tempfile(mkdir=True)
 @with_tree(tree={'file': 'load'})
 @serve_path_via_http
-@known_failure_direct_mode  #FIXME
 def test_add_dir_file(repo_path, p, topurl):
     # test whenever file becomes a directory and then back a file.  Should all work!
     annex = Annexificator(path=repo_path, auto_finalize=False)

@@ -42,31 +42,57 @@ def test_smoke_pipelines():
 
 
 @with_tempfile
-@use_cassette('test_simple_s3_test0_nonversioned_crawl')
 @skip_if_no_network
-def test_drop(path):
-    get_test_providers('s3://datalad-test0-nonversioned')  # to verify having s3 credentials
+def _test_drop(path, drop_immediately):
+    s3url = 's3://datalad-test0-nonversioned'
+    providers = get_test_providers(s3url)  # to verify having s3 credentials
+    # vcr tape is getting bound to the session object, so we need to
+    # force re-establishing the session for the bucket.
+    # TODO (in datalad): make a dedicated API for that, now too obscure
+    _ = providers.get_status(s3url, allow_old_session=False)
     create(path)
     # unfortunately this doesn't work without force dropping since I guess vcr
     # stops and then gets queried again for the same tape while testing for
     # drop :-/
-    with externals_use_cassette('test_simple_s3_test0_nonversioned_crawl_ext'), \
-         chpwd(path):
-        crawl_init(template="simple_s3",
-                   args=dict(
-                       bucket="datalad-test0-nonversioned",
-                       drop=True,
-                       drop_force=True  # so test goes faster
-                   ),
-                   save=True
-                   )
-        crawl()
+    with chpwd(path):
+        crawl_init(
+            template="simple_s3",
+            args=dict(
+                bucket="datalad-test0-nonversioned",
+                drop=True,
+                drop_force=True,  # so test goes faster
+                drop_immediately=drop_immediately,
+            ),
+            save=True
+        )
+    if drop_immediately:
+        # cannot figure out but taping that interaction results in
+        # git annex addurl  error.  No time to figure it out
+        # so we just crawl without vcr for now. TODO: figure out WTF
+        with chpwd(path):
+            crawl()
+    else:
+        with externals_use_cassette(
+                'test_simple_s3_test0_nonversioned_crawl_ext'
+                + ('_immediately' if drop_immediately else '')), \
+                chpwd(path):
+            crawl()
     # test that all was dropped
     repo = AnnexRepo(path, create=False)
     files = glob(_path_(path, '*'))
     eq_(len(files), 8)
     for f in files:
         assert_false(repo.file_has_content(f))
+
+
+@use_cassette('test_simple_s3_test0_nonversioned_crawl')
+def test_drop():
+    _test_drop(drop_immediately=False)
+
+
+@use_cassette('test_simple_s3_test0_nonversioned_crawl_immediately')
+def test_drop_immediately():
+    _test_drop(drop_immediately=True)
 
 
 @with_tempfile

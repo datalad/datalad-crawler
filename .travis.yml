@@ -3,7 +3,6 @@
 language: python
 
 python:
-  - 2.7
   - 3.5
   - 3.6
 
@@ -47,7 +46,7 @@ install:
   - cd ..; pip install -q codecov; cd -
   # --upgrade-strategy=eager to overcome the problem of twisted needing newer attrs
   # and pip not carying enough: https://github.com/pypa/pip/issues/988
-  - pip install --upgrade-strategy=eager -r requirements.txt
+  - pip install  --upgrade-strategy=eager -r requirements-devel.txt
   # To heal bloody scrapy -- yoh guesses that pip isn't good enough to guarantee
   # specified versioning in the depends
   - pip install --upgrade attrs
@@ -64,7 +63,7 @@ script:
   # -A "$NOSE_SELECTION_OP(integration or usecase or slow)"
   - http_proxy=
     PATH=$PWD/tools/coverage-bin:$PATH
-    $NOSE_WRAPPER `which nosetests` $NOSE_OPTS
+    $NOSE_WRAPPER python -m nose $NOSE_OPTS
       -v
       --with-doctest
       --with-cov --cover-package datalad_crawler

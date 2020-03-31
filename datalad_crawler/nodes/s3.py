@@ -22,7 +22,7 @@ from datalad.support.s3 import get_key_url
 from datalad.support.network import iso8601_to_epoch
 from datalad.downloaders.providers import Providers
 from datalad.downloaders.s3 import S3Downloader
-from datalad.downloaders.base import TargetFileAbsent
+from datalad.support.exceptions import TargetFileAbsent
 from ..dbs.versions import SingleVersionDB
 
 from logging import getLogger
@@ -132,6 +132,13 @@ class crawl_s3(object):
         if self.repo:
             versions_db = SingleVersionDB(self.repo)
             prev_version = versions_db.version
+            if prev_version and not prev_version.get('version-id', None):
+                # Situation might arise when a directory contains no files, only
+                # directories which we place into subdatasets
+                # see https://github.com/datalad/datalad-crawler/issues/68
+                # Workaround -- start from scratch
+                lgr.warning("stored version-id is empty. Crawling from the beginning")
+                prev_version = None
         else:
             prev_version, versions_db = None, None
 
@@ -145,7 +152,7 @@ class crawl_s3(object):
         # In real life last_modified should be enough, but life can be as tough as we made it for 'testing'
         def kf(k, f):
             """Some elements, such as Prefix wouldn't have any of attributes to sort by"""
-            return getattr(k, f, None)
+            return getattr(k, f, '')
         # So ATM it would sort Prefixes first, but that is not necessarily correct...
         # Theoretically the only way to sort Prefix'es with the rest is traverse that Prefix
         # and take latest last_modified there but it is expensive, so -- big TODO if ever ;)
@@ -203,7 +210,7 @@ class crawl_s3(object):
         for e in versions_sorted + [None]:
             filename = e.name if e is not None else None
             if (self.strip_prefix and self.prefix):
-                 filename = _strip_prefix(filename, self.prefix)
+                filename = _strip_prefix(filename, self.prefix)
             if filename and self.exclude and re.search(self.exclude, filename):
                 stats.skipped += 1
                 continue
