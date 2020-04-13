@@ -179,7 +179,11 @@ class initiate_dataset(object):
             sds = ds.get_superdataset(registered_only=False)
             if sds is not None:
                 lgr.debug("Adding %s as a subdataset to %s", ds, sds)
-                sds.add(ds.path, save=False)
+                sds.repo.add_submodule(
+                    str(ds.pathobj.relative_to(sds.pathobj)),
+                    url=None,
+                    name=None,
+                )
                 # this leaves the subdataset staged in the parent
             elif str(self.add_to_super) != 'auto':
                 raise ValueError(
@@ -820,11 +824,11 @@ class Annexificator(object):
 
             if one_commit_at_a_time:
                 all_to_merge = list(
-                    self.repo.get_branch_commits(
+                    _get_branch_commits(
+                        self.repo,
                         branch,
                         limit='left-only',
-                        stop=last_merged_checksum,
-                        value='hexsha'))[::-1]
+                        stop=last_merged_checksum))[::-1]
             else:
                 all_to_merge = [branch]
 
@@ -1469,3 +1473,13 @@ class Annexificator(object):
         """
         # now we can just refer to initiate_dataset which uses create
         return initiate_dataset(*args, **kwargs)
+
+
+# compatibility kludge for API change post DataLad 0.12.2
+def _get_branch_commits(repo, branch, limit=None, stop=None):
+    if hasattr(repo, 'get_branch_commits_'):
+        return repo.get_branch_commits_(
+            branch, limit, stop)
+    else:
+        return repo.get_branch_commits(
+            branch, limit, stop, value='hexsha')
