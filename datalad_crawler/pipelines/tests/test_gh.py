@@ -5,7 +5,12 @@ from datalad.api import (
     crawl_init,
     create,
 )
-from datalad.consts import GITHUB_LOGIN_URL
+try:
+    from datalad.consts import GITHUB_LOGIN_URL
+except ImportError:
+    # might be dated which has not merged
+    # https://github.com/datalad/datalad/pull/4400 yet
+    GITHUB_LOGIN_URL = 'https://github.com/login'
 from datalad.downloaders.tests.utils import get_test_providers
 
 from datalad.tests.utils import (
