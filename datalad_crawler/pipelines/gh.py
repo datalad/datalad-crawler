@@ -70,7 +70,7 @@ def pipeline(org=None,
 
     import github as gh
     # TODO: consider elevating that function to a "public" helper
-    from datalad.distribution.create_sibling_github import _get_github_entity
+    from datalad.support.github_ import _gen_github_entity
     superds = Dataset('.')
     if metadata_nativetypes:
         metadata_nativetypes = assure_list_from_str(metadata_nativetypes, sep=',')
@@ -80,8 +80,7 @@ def pipeline(org=None,
         assert list(data) == ['datalad_stats'], data
         # TODO: actually populate the datalad_stats with # of datasets and
         # possibly amount of data downloaded in get below
-        cred = UserPassword('github')
-        entity = _get_github_entity(gh, cred, None, None, org)
+        entity, cred = next(_gen_github_entity(None, None, org))
         all_repos = list(entity.get_repos(repo_type))
 
         for repo in all_repos:
