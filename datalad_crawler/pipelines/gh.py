@@ -30,7 +30,7 @@ lgr = getLogger("datalad.crawler.pipelines.github")
 
 
 def pipeline(org=None,
-             repo_type='sources', include='.*', exclude='--',
+             repo_type='sources', include='.*', exclude=None,
              metadata_nativetypes=None, aggregate=False,
              get_data=False, drop_data=False):
     """Crawl github organization and install all matching repos as subdatasets
