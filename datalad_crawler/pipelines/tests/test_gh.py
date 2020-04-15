@@ -6,14 +6,17 @@ from datalad.api import (
     create,
 )
 try:
-    from datalad.consts import GITHUB_LOGIN_URL
+    from datalad.support.github_ import _get_github_cred
 except ImportError:
     # might be dated which has not merged
     # https://github.com/datalad/datalad/pull/4400 yet
-    GITHUB_LOGIN_URL = 'https://github.com/login'
-from datalad.downloaders.tests.utils import get_test_providers
+    from datalad.downloaders.credentials import UserPassword
+    def _get_github_cred():
+        """Trimmed down helper"""
+        return UserPassword("github", "does not matter")
 
 from datalad.tests.utils import (
+    SkipTest,
     assert_false,
     assert_greater,
     skip_if_no_network,
@@ -24,7 +27,8 @@ from datalad.tests.utils import (
 @skip_if_no_network
 @with_tempfile
 def test_crawl(tempd):
-    get_test_providers(GITHUB_LOGIN_URL)
+    if not _get_github_cred().is_known:
+        raise SkipTest("no github credential")
     ds = create(tempd)
     with chpwd(tempd):
         crawl_init(
