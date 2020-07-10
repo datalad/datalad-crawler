@@ -258,7 +258,9 @@ def test_openfmri_addperms(ind, topurl, outd, clonedir):
 @with_tempfile
 @with_tempfile
 # unresolved mystery:  https://github.com/datalad/datalad-crawler/issues/55
-@skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0')
+@skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0',
+         msg="Skip since system git is %s (underlying issue remains unresolved mystery)"
+             % external_versions['cmd:system-git'])
 def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     index_html = opj(ind, 'ds666', 'index.html')
 
