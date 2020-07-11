@@ -327,15 +327,18 @@ class Annexificator(object):
             if no_annex: # isinstance(self.repo, GitRepo):
                 raise ValueError("Cannot have special remotes in a simple git repo")
 
-            # TODO: move under AnnexRepo with proper testing etc
-            repo_info_repos = [v for k, v in self.repo.repo_info().items()
-                               if k.endswith(' repositories')]
-            annex_remotes = {r['description']: r for r in sum(repo_info_repos, [])}
+            # dummy call to just ensure that git-annex was invoked and possibly initialized
+            self.repo.repo_info()
+            annex_remotes = [
+                r['name'] for r in self.repo.get_special_remotes().values()
+            ]
 
             for remote in special_remotes:
                 if remote not in git_remotes:
                     if remote in annex_remotes:
-                        # Already known - needs only enabling
+                        # Already known - might just need enabling, and since enableremote
+                        # ran on already enabled without any additional options should not have
+                        # side effects, we just try to enable without checking
                         lgr.info("Enabling existing special remote %s" % remote)
                         self.repo.enable_remote(remote)
                     else:
