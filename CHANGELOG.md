@@ -9,6 +9,12 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.6.0 (Jul 13, 2020) -- Honoring Kyle (who never adds a release "name")
+
+- ENH: fix enabling special remotes when working ith recent (as of 202006)
+  git-annex
+- NF: gh (for github) and xnat crawler pipelines
+
 ## 0.5.0 (Feb 27, 2020) -- Future is bright
 
 - DataLad 0.12 is now minimal version.  Codebase is now compatible with current
