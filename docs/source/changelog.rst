@@ -16,6 +16,24 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
+0.6.0 (Jul 13, 2020) – Honoring Kyle (who never adds a release “name”)
+----------------------------------------------------------------------
+
+-  ENH: fix enabling special remotes when working ith recent (as of
+   202006) git-annex
+-  NF: gh (for github) and xnat crawler pipelines
+
+0.5.0 (Feb 27, 2020) – Future is bright
+---------------------------------------
+
+-  DataLad 0.12 is now minimal version. Codebase is now compatible with
+   current DataLad 0.12.2-293-gd5fcb4833
+
+   -  uses less of GitPython functionality
+
+-  OpenfMRI pipeline tests “relaxed” (no commit counts etc)
+-  s3 node - be robust in case of no previous version-id known
+
 0.4.4 (Nov 20, 2019) – … despite some mocking
 ---------------------------------------------
 
