@@ -857,7 +857,7 @@ class Annexificator(object):
                 elif strategy == 'theirs':
                     self.repo.merge(to_merge, options=["-s", "ours", "--no-commit"],
                                     expect_stderr=True, **merge_kwargs)
-                    self.repo._git_custom_command([], "git read-tree -m -u %s" % to_merge)
+                    self.repo.call_git(["read-tree", "-m", "-u", to_merge])
                     self.repo.add('.', options=self.options)  # so everything is staged to be committed
                 else:
                     raise NotImplementedError(strategy)
@@ -905,14 +905,13 @@ class Annexificator(object):
         if msg is not None:
             options = options + ["-m", msg]
         self._precommit()  # so that all batched annexes stop
-        self.repo._git_custom_command([], ["git", "commit"] + options,
-                                      check_fake_dates=True)
+        self.repo.call_git(["commit"] + options)
         # self.repo.commit(msg)
         # self.repo.repo.git.commit(options)
 
     def _unstage(self, fpaths):
         # self.repo.cmd_call_wrapper.run(["git", "reset"] + fpaths)
-        self.repo._git_custom_command(fpaths, ["git", "reset"])
+        self.repo.call_git(["reset"], files=fpaths)
 
     def _stage(self, fpaths):
         self.repo.add(fpaths, git=True)
@@ -925,7 +924,7 @@ class Annexificator(object):
         is resolved
         """
         # out, err = self.repo.cmd_call_wrapper.run(["git", "status", "--porcelain"])
-        cmd_args = ["git", "status", "--porcelain"] + args
+        cmd_args = ["status", "--porcelain"] + args
         staged, notstaged, untracked, deleted = [], [], [], []
         statuses = {
             '??': untracked,
@@ -939,12 +938,7 @@ class Annexificator(object):
                                      # TODO: handle "properly" by committing before D happens
         }
 
-        if isinstance(self.repo, AnnexRepo) and self.repo.is_direct_mode():
-            statuses['AD'] = staged
-            out, err = self.repo.proxy(cmd_args)
-        else:
-            out, err = self.repo._git_custom_command([], cmd_args)
-            assert not err
+        out = self.repo.call_git(cmd_args)
 
         for l in out.split('\n'):
             if not l:
