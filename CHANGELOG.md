@@ -9,6 +9,11 @@ This is a high level and scarce summary of the changes between releases.  We
 would recommend to consult log of the [DataLad git
 repository](http://github.com/datalad/datalad-crawler) for more details.
 
+## 0.7.0 (Nov 20, 2020) -- Cherish the moment
+
+- RF: stop using `_{git,annex}_custom_command` to allow DataLad core
+  progress forward without "breaking" the crawler
+
 ## 0.6.0 (Jul 13, 2020) -- Honoring Kyle (who never adds a release "name")
 
 - ENH: fix enabling special remotes when working ith recent (as of 202006)
