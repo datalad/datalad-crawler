@@ -75,7 +75,8 @@ def check_dropall_get(repo):
     t1w_fpath = opj(repo.path, 'sub-1', 'anat', 'sub-1_T1w.dat')
     ok_file_has_content(t1w_fpath, "mighty load 2.0.0")
     # --force since it would fail to verify presence in case we remove archives keys... TODO
-    repo._annex_custom_command([], ["git", "annex", "drop", "--all", "--force"])
+    repo.drop([], options=['--all', '--force'])
+
     clean(dataset=repo.path)  # remove possible extracted archives
     with assert_raises(AssertionError):
         ok_file_has_content(t1w_fpath, "mighty load 2.0.0")
