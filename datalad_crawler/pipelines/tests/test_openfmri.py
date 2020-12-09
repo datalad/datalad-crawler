@@ -26,6 +26,7 @@ from ...nodes.annex import (
 )
 from ...pipeline import load_pipeline_from_module
 
+from datalad.support.exceptions import CommandError
 from datalad.support.external_versions import external_versions
 from datalad.support.stats import ActivityStats
 from datalad.support.gitrepo import GitRepo
@@ -80,7 +81,13 @@ def check_dropall_get(repo):
     clean(dataset=repo.path)  # remove possible extracted archives
     with assert_raises(AssertionError):
         ok_file_has_content(t1w_fpath, "mighty load 2.0.0")
-    repo.get('.')
+    try:
+        repo.get('.')
+    except CommandError as exc:
+        # get() raises an exception starting with DataLad version 0.14 if
+        # getting any of the items fail, and the `drop --force` call above
+        # drops metadata files that aren't available elsewhere.
+        pass
     ok_file_has_content(t1w_fpath, "mighty load 2.0.0")
 
 
