@@ -47,7 +47,6 @@ from datalad.support.network import get_url_disposition_filename
 
 from datalad import cfg
 
-from datalad_crawler.base import get_runner
 from datalad_crawler.pipeline import initiate_pipeline_config
 from datalad_crawler.dbs.files import PhysicalFileStatusesDB
 from datalad_crawler.dbs.files import JsonFileStatusesDB
@@ -58,10 +57,6 @@ from datalad.dochelpers import exc_str
 from logging import getLogger
 
 lgr = getLogger('datalad.crawl.annex')
-
-_runner = get_runner()
-_call = _runner.call
-_run = _runner.run
 
 
 # TODO: make use of datalad_stats
@@ -229,15 +224,15 @@ class initiate_dataset(object):
             elif existing == 'raise':
                 raise RuntimeError("%s already exists" % dataset_path)
             elif existing == 'replace':
-                _call(rmtree, dataset_path)
+                rmtree(dataset_path)
             elif existing == 'adjust':
                 # E.g. just regenerate configs/meta
                 init = False
             else:  # TODO: 'crawl'  ;)
                 raise ValueError(self.existing)
         if init:
-            _call(self._initiate_dataset, dataset_path, dataset_name)
-        _call(self._save_crawl_config, dataset_path, data)
+            self._initiate_dataset(dataset_path, dataset_name)
+        self._save_crawl_config(dataset_path, data)
 
         yield data_updated
 
@@ -500,7 +495,7 @@ class Annexificator(object):
             assert fpath
             # just add into git directly for now
             # TODO: tune  add so we could use its json output, and may be even batch it
-            out_json = _call(self.repo.add, fpath, options=self.options)
+            out_json = self.repo.add(fpath, options=self.options)
         # elif self.mode == 'full':
         #     # since addurl ignores annex.largefiles we need first to download that file and then
         #     # annex add it
@@ -536,13 +531,13 @@ class Annexificator(object):
                 if isdir(filepath):
                     # if directory - tricky, since we would want then to check if no
                     # staged changes under
-                    _call(self._check_no_staged_changes_under_dir, filepath, stats=stats)
-                    _call(rmtree, filepath)
+                    self._check_no_staged_changes_under_dir(filepath, stats=stats)
+                    rmtree(filepath)
                 else:
-                    _call(unlink, filepath)
-                _call(stats.increment, 'overwritten')
+                    unlink(filepath)
+                stats.increment('overwritten')
             else:
-                _call(self._check_non_existing_filepath, filepath, stats=stats)
+                self._check_non_existing_filepath(filepath, stats=stats)
             # TODO: We need to implement our special remote here since no downloaders used
             if self.mode == 'full' and url_status and url_status.size:  # > 1024**2:
                 lgr.info("Need to download %s from %s. No progress indication will be reported"
@@ -550,8 +545,8 @@ class Annexificator(object):
             try:
                 out_json = try_multiple(
                     6, AnnexBatchCommandError, 3,  # up to 3**5=243 sec sleep
-                    _call,
-                    self.repo.add_url_to_file, fpath, url,
+                    self.repo.add_url_to_file,
+                    fpath, url,
                     options=annex_options, batch=self.batch_add)
             except AnnexBatchCommandError as exc:
                 if self.skip_problematic:
@@ -564,8 +559,8 @@ class Annexificator(object):
             if self.mode == 'full' or not added_to_annex:
                 # we need to adjust our download stats since addurl doesn't do that and we do
                 # not use our downloaders here
-                _call(stats.increment, 'downloaded')
-                _call(stats.increment, 'downloaded_size', _call(lambda: os.stat(filepath).st_size))
+                stats.increment('downloaded')
+                stats.increment('downloaded_size', os.stat(filepath).st_size)
 
         # file might have been added but really not changed anything (e.g. the same README was generated)
         # TODO:
@@ -573,13 +568,13 @@ class Annexificator(object):
         # File might have been not modified at all, so let's check its status first
         changed = set().union(*self._get_status(args=[fpath]))
         if fpath in changed:
-            _call(stats.increment,
+            stats.increment(
                   'add_annex'
                     if ('key' in out_json and out_json['key'] is not None)
                     else 'add_git'
-                  )
+            )
         else:
-            _call(stats.increment, 'skipped')
+            stats.increment('skipped')
 
         # TODO!!:  sanity check that no large files are added to git directly!
 
@@ -592,14 +587,14 @@ class Annexificator(object):
                 # _call(os.utime, filepath, (time.time(), remote_status.mtime))
                 # *nix only!  TODO
                 if url_status.mtime:
-                    _call(lmtime, filepath, url_status.mtime)
+                    lmtime(filepath, url_status.mtime)
                 if statusdb:
-                    _call(statusdb.set, filepath, url_status)
+                    statusdb.set(filepath, url_status)
             else:
                 # we still need to inform DB about this file so later it would signal to remove it
                 # if we no longer care about it
                 if statusdb:
-                    _call(statusdb.set, filepath)
+                    statusdb.set(filepath)
 
         self._states.add("Updated git/annex from a remote location")
 
@@ -625,7 +620,7 @@ class Annexificator(object):
         dirpath_normalized = _normalize_path(self.repo.path, dirpath)
         for dirty_file in dirty_files:
             if stats:
-                _call(stats.increment, 'removed')
+                stats.increment('removed')
             if dirty_file.startswith(dirpath_normalized):
                 if self.auto_finalize:
                     self.finalize()({'datalad_stats': stats})
@@ -667,9 +662,9 @@ class Annexificator(object):
                                     "within git.  Please commit or remove it before trying "
                                     "to annex this new file" % locals())
                         lgr.debug("Removing %s as it is in the path of %s" % (dirpath, filepath))
-                        _call(os.unlink, dirpath)
+                        os.unlink(dirpath)
                         if stats:
-                            _call(stats.increment, 'overwritten')
+                            stats.increment('overwritten')
                     break  # in any case -- we are done!
 
                 dirpath, _ = ops(dirpath)
@@ -1060,7 +1055,7 @@ class Annexificator(object):
                 # if a single new version -- no special treatment is needed, but we need to
                 # inform db about this new version
                 if nnew_versions == 1:
-                    _call(setattr, versions_db, 'version', smallest_new_version)
+                    setattr(versions_db, 'version', smallest_new_version)
                 # we can't return a generator here
                 for d in self.finalize()(data):
                     yield d
@@ -1072,7 +1067,7 @@ class Annexificator(object):
                 nfpaths = len(fpaths)
                 lgr.debug("Unstaging %d files for version %s", nfpaths, version)
                 nunstaged += nfpaths
-                _call(self._unstage, list(fpaths.values()))
+                self._unstage(list(fpaths.values()))
 
             stats = data.get('datalad_stats', None)
             stats_str = ('\n\n' + stats.as_str(mode='full')) if stats else ''
@@ -1098,7 +1093,7 @@ class Annexificator(object):
                 nunstaged -= nfpaths
                 assert (nfpaths >= 0)
                 assert (nunstaged >= 0)
-                _call(self._stage, vfpaths)
+                self._stage(vfpaths)
 
                 # RF: with .finalize() to avoid code duplication etc
                 # ??? what to do about stats and states?  reset them or somehow tune/figure it out?
@@ -1106,11 +1101,11 @@ class Annexificator(object):
                 iversion + 1, nnew_versions, version, nunstaged)
 
                 if stats:
-                    _call(stats.reset)
+                    stats.reset()
 
                 if version:
-                    _call(setattr, versions_db, 'version', version)
-                _call(self._commit, "%s (%s)%s" % (', '.join(self._states), vmsg, stats_str), options=[])
+                    setattr(versions_db, 'version', version)
+                self._commit("%s (%s)%s" % (', '.join(self._states), vmsg, stats_str), options=[])
                 # unless we update data, no need to yield multiple times I guess
                 # but shouldn't hurt
                 yield data
@@ -1330,12 +1325,12 @@ class Annexificator(object):
             stats = data.get('datalad_stats', None)
             if self.repo.dirty:  # or self.tracker.dirty # for dry run
                 lgr.info("Repository found dirty -- adding and committing")
-                _call(self.repo.add, '.', options=self.options)  # so everything is committed
+                self.repo.add('.', options=self.options)  # so everything is committed
 
                 stats_str = ('\n\n' + stats.as_str(mode='full')) if stats else ''
-                _call(self._commit, "%s%s" % (', '.join(self._states), stats_str), options=["-a"])
+                self._commit("%s%s" % (', '.join(self._states), stats_str), options=["-a"])
                 if stats:
-                    _call(stats.reset)
+                    stats.reset()
             else:
                 lgr.info("Found branch non-dirty -- nothing was committed")
 
@@ -1413,9 +1408,9 @@ class Annexificator(object):
                     files_str = ": " + ', '.join(obsolete) if len(obsolete) < 10 else ""
                     lgr.info('Removing %d obsolete files%s' % (len(obsolete), files_str))
                     stats = data.get('datalad_stats', None)
-                    _call(self.repo.remove, obsolete)
+                    self.repo.remove(obsolete)
                     if stats:
-                        _call(stats.increment, 'removed', len(obsolete))
+                        stats.increment('removed', len(obsolete))
                     for filepath in obsolete:
                         statusdb.remove(filepath)
                 yield data
@@ -1433,16 +1428,16 @@ class Annexificator(object):
         filename = self._get_fpath(data, stats)
         # TODO: not sure if we should may be check if exists, and skip/just complain if not
         if stats:
-            _call(stats.increment, 'removed')
+            stats.increment('removed')
         filepath = opj(self.repo.path, filename)
         if lexists(filepath):
             if os.path.isdir(filepath):
                 if recursive:
-                    _call(self.repo.remove, filename, recursive=True)
+                    self.repo.remove(filename, recursive=True)
                 else:
                     lgr.warning("Do not removing %s recursively, skipping", filepath)
             else:
-                _call(self.repo.remove, filename)
+                self.repo.remove(filename)
         else:
             lgr.warning("Was asked to remove non-existing path %s", filename)
         yield data
