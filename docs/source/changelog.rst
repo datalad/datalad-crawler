@@ -16,6 +16,12 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
+0.8.0 (Jan 03, 2021) – Good as New
+----------------------------------
+
+-  Making compatible with recent DataLad by using new WitlessRunner and
+   not older unused features.
+
 0.7.0 (Nov 20, 2020) – Cherish the moment
 -----------------------------------------
 
