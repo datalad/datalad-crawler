@@ -55,7 +55,6 @@ class LorisAPIBIDSExtractor(object):
             for file_dict in jsdata['SessionFiles']:
                 candid   = 'sub-' + file_dict['Candidate']
                 visit    = 'ses-' + file_dict['Visit']
-                lgr.info(self.apibase + file_dict['JsonLink'])
                 yield updated(data, {
                     'url' : self.apibase + file_dict['TsvLink'],
                     'path': join(bids_root_dir, candid, visit)
@@ -121,8 +120,8 @@ def pipeline(url=None, apibase=None):
                     " and exclude=.datalad/crawl/crawl.cfg"
                     " and exclude=*scans.json"
                     " and exclude=*bval"
-                    " and exclude=dataset_description.json"
-                    " and exclude=participants.json"
+                    " and exclude=BIDS_dataset/dataset_description.json"
+                    " and exclude=BIDS_dataset/participants.json"
                 ]
     )
     lorisapi = LorisAPIBIDSExtractor(apibase, annex)
