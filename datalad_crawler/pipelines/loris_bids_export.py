@@ -82,7 +82,7 @@ class LorisAPIBIDSExtractor(object):
                             "url" : self.apibase + file_dict[associated_file],
                             "path": join(bids_root_dir, candid, visit, subfolder)
                         })
-       return
+        return
 
     def finalize(self):
         def _finalize(data):
