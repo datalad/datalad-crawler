@@ -80,7 +80,8 @@ def pipeline(org=None,
         assert list(data) == ['datalad_stats'], data
         # TODO: actually populate the datalad_stats with # of datasets and
         # possibly amount of data downloaded in get below
-        entity, cred = next(_gen_github_entity(None, None, org))
+        # Needs DataLad >= 0.13.6~7^2~3 where password was removed
+        entity, cred = next(_gen_github_entity(None, org))
         all_repos = list(entity.get_repos(repo_type))
 
         for repo in all_repos:
