@@ -16,9 +16,11 @@ import re
 
 from datalad.api import Dataset, install
 from datalad.support import path as op
+from datalad.support.gitrepo import GitRepo
 from datalad.utils import (
     assure_bool,
     assure_list_from_str,
+    rmtree,
     updated
 )
 from datalad.downloaders.credentials import UserPassword
@@ -112,6 +114,16 @@ def pipeline(org=None,
                     on_failure='continue'
                 )
             except Exception as exc:
+                if all(f.get('action', '') == 'add_submodule' and f.get('status', '') == 'error' for f in exc.failed):
+                    # since we do not like nice exceptions and want to parse arbitrary text
+                    # in the return records... let's resist that urge and redo the check
+                    # since if no commit -- likely reason is an empty repo
+                    if GitRepo(dspath).get_hexsha() is None:
+                        lgr.warning(
+                            "Cloned an empty repository.  Removing and proceeding without error"
+                        )
+                        rmtree(dspath)
+                        continue
                 if all(f.get('action', '') == 'get' for f in exc.failed):
                     lgr.warning(
                         "We failed to obtain %d files, extracted metadata etc might be incomplete",
