@@ -16,6 +16,13 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
+0.8.2 (Mar 19, 2021) – Hunt the corpses
+---------------------------------------
+
+-  RF: Replace custom SafeConfigParserWithIncludes with standard
+   ConfigParser
+-  BF: gh - handle situation when cloned repo is still empty
+
 0.8.1 (Feb 25, 2021) – Pay the price
 ------------------------------------
 
