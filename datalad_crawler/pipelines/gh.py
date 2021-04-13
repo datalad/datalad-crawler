@@ -16,9 +16,11 @@ import re
 
 from datalad.api import Dataset, install
 from datalad.support import path as op
+from datalad.support.gitrepo import GitRepo
 from datalad.utils import (
     assure_bool,
     assure_list_from_str,
+    rmtree,
     updated
 )
 from datalad.downloaders.credentials import UserPassword
@@ -80,7 +82,8 @@ def pipeline(org=None,
         assert list(data) == ['datalad_stats'], data
         # TODO: actually populate the datalad_stats with # of datasets and
         # possibly amount of data downloaded in get below
-        entity, cred = next(_gen_github_entity(None, None, org))
+        # Needs DataLad >= 0.13.6~7^2~3 where password was removed
+        entity, cred = next(_gen_github_entity(None, org))
         all_repos = list(entity.get_repos(repo_type))
 
         for repo in all_repos:
@@ -111,6 +114,16 @@ def pipeline(org=None,
                     on_failure='continue'
                 )
             except Exception as exc:
+                if all(f.get('action', '') == 'add_submodule' and f.get('status', '') == 'error' for f in exc.failed):
+                    # since we do not like nice exceptions and want to parse arbitrary text
+                    # in the return records... let's resist that urge and redo the check
+                    # since if no commit -- likely reason is an empty repo
+                    if GitRepo(dspath).get_hexsha() is None:
+                        lgr.warning(
+                            "Cloned an empty repository.  Removing and proceeding without error"
+                        )
+                        rmtree(dspath)
+                        continue
                 if all(f.get('action', '') == 'get' for f in exc.failed):
                     lgr.warning(
                         "We failed to obtain %d files, extracted metadata etc might be incomplete",

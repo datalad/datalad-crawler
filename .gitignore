@@ -22,3 +22,4 @@ tmp
 .*.swp
 .travis.yml.evil-bd
 .asv
+__testhome__

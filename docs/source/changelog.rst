@@ -16,6 +16,31 @@ We would recommend to consult log of the `DataLad git
 repository <http://github.com/datalad/datalad-crawler>`__ for more
 details.
 
+0.8.2 (Mar 19, 2021) – Hunt the corpses
+---------------------------------------
+
+-  RF: Replace custom SafeConfigParserWithIncludes with standard
+   ConfigParser
+-  BF: gh - handle situation when cloned repo is still empty
+
+0.8.1 (Feb 25, 2021) – Pay the price
+------------------------------------
+
+-  Fix up use of protected datalad’s interface for auth to github.
+   Boosted DataLad version dependency to 0.13.6
+
+0.8.0 (Jan 03, 2021) – Good as New
+----------------------------------
+
+-  Making compatible with recent DataLad by using new WitlessRunner and
+   not older unused features.
+
+0.7.0 (Nov 20, 2020) – Cherish the moment
+-----------------------------------------
+
+-  RF: stop using ``_{git,annex}_custom_command`` to allow DataLad core
+   progress forward without “breaking” the crawler
+
 0.6.0 (Jul 13, 2020) – Honoring Kyle (who never adds a release “name”)
 ----------------------------------------------------------------------
 

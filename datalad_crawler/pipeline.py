@@ -62,7 +62,7 @@ from datalad.support.gitrepo import GitRepo
 from datalad.support.network import parse_url_opts
 from datalad.support.stats import ActivityStats
 from datalad.support.exceptions import PipelineNotSpecifiedError
-from datalad.support.configparserinc import SafeConfigParserWithIncludes
+from configparser import ConfigParser
 
 from logging import getLogger
 lgr = getLogger('datalad.crawler.pipeline')
@@ -338,7 +338,7 @@ def initiate_pipeline_config(template, template_func=None, template_kwargs=None,
 
     crawl_config_repo_path = opj(CRAWLER_META_DIR, CRAWLER_META_CONFIG_FILENAME)
     crawl_config = opj(crawl_config_dir, CRAWLER_META_CONFIG_FILENAME)
-    cfg_ = SafeConfigParserWithIncludes()
+    cfg_ = ConfigParser()
     cfg_.add_section(CRAWLER_PIPELINE_SECTION)
 
     cfg_.set(CRAWLER_PIPELINE_SECTION, 'template', template)
@@ -497,7 +497,7 @@ def load_pipeline_from_config(path):
     so that theoretically we could specify basic pipelines completely within
     a URL
     """
-    cfg_ = SafeConfigParserWithIncludes()
+    cfg_ = ConfigParser()
     cfg_.read([path])
     pipeline = None
     for sec in (CRAWLER_PIPELINE_SECTION, CRAWLER_PIPELINE_SECTION_DEPRECATED):
