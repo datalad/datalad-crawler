@@ -1,3 +1,16 @@
+# 0.8.3 (Tue Apr 13 2021)
+
+#### 🐛 Bug Fix
+
+- Set up workflow with auto for releasing & PyPI uploads [#86](https://github.com/datalad/datalad-crawler/pull/86) ([@jwodder](https://github.com/jwodder) [@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 2
+
+- John T. Wodder II ([@jwodder](https://github.com/jwodder))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.8.2 (Mar 19, 2021) -- Hunt the corpses
 
 - RF: Replace custom SafeConfigParserWithIncludes with standard ConfigParser
