@@ -50,6 +50,7 @@ except (ImportError, OSError) as exc:
 requires = {
     'core': [
         'datalad>=0.13.6',
+        'datalad_deprecated',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
     ],
     'devel-docs': [
