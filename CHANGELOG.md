@@ -1,3 +1,15 @@
+# 0.8.4 (Thu Apr 15 2021)
+
+#### 🐛 Bug Fix
+
+- Add dependency on datalad_deprecated [#94](https://github.com/datalad/datalad-crawler/pull/94) ([@mih](https://github.com/mih))
+
+#### Authors: 1
+
+- Michael Hanke ([@mih](https://github.com/mih))
+
+---
+
 # 0.8.3 (Tue Apr 13 2021)
 
 #### 🐛 Bug Fix
