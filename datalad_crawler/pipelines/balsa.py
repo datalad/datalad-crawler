@@ -90,7 +90,7 @@ def extract_meta(data):
 class BalsaSupport(object):
 
     def __init__(self, repo):
-        """Verifies that the canoncial tarball contains all files that are
+        """Verifies that the canonical tarball contains all files that are
         individually listed
 
            Parameters
