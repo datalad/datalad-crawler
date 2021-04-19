@@ -346,12 +346,12 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # In --incremental mode there is a side effect of absent now
     #   2*remove of obsolete metadata object files,
     #     see https://github.com/datalad/datalad/issues/2772
-    # TODO inspect by knowledgeable person and reenable
+    # TODO inspect by knowledgeable person and re-enable
     #ncommits_master = len(commits_hexsha['master'])
     #assert_in(ncommits_master, [13, 14])
     #assert_in(len(commits_l['master']), [8, 9])
 
-    # TODO inspect by knowledgeable person and reenable
+    # TODO inspect by knowledgeable person and re-enable
     #eq_(len(commits_hexsha['incoming']), ncommits_master - 8)
     #eq_(len(commits_l['incoming']), ncommits_master - 8)
     #eq_(len(commits_hexsha['incoming-processed']), ncommits_master - 5)
@@ -371,7 +371,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     def hexsha(l):
         return l.__class__(x.hexsha for x in l)
 
-    # TODO requires additional tooling to reenable
+    # TODO requires additional tooling to re-enable
     ## Verify that we have desired tree of merges
     #eq_(hexsha(commits_l['incoming-processed'][0].parents), (commits_l['incoming-processed'][1],
     #                                                         commits_l['incoming'][0]))
@@ -383,7 +383,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
     # parents are:
     # commit "[DATALAD] dataset aggregate metadata update\n" in commits_l['master'] and
     # commit "[DATALAD] Added files from extracted archives\n\nFiles processed: 6\n renamed: 2\n +annex: 3\nBranches merged: incoming->incoming-processed\n" in commits_l['incoming-processed']
-    # TODO requires additional tooling to reenable
+    # TODO requires additional tooling to re-enable
     #eq_(hexsha(commits_l['master'][1].parents), (commits_l['master'][2],
     #                                             commits_l['incoming-processed'][0]))
     #eq_(hexsha(commits_l['master'][3].parents), (commits_l['master'][4],
@@ -595,7 +595,7 @@ def test_openfmri_pipeline2(ind, topurl, outd):
     eq_(len(commits_hexsha['incoming']), ncommits_master - 2)
     eq_(len(commits_l['incoming']), ncommits_master - 2)
     eq_(len(commits_hexsha['incoming-processed']), ncommits_master - 1)
-    # TODO inspect by knowledgeable person and reenable
+    # TODO inspect by knowledgeable person and re-enable
     #eq_(len(commits_l['incoming-processed']), ncommits_master - 2)
 
     # rerun pipeline -- make sure we are on the same in all branches!

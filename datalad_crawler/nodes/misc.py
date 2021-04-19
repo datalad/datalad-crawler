@@ -51,7 +51,7 @@ class fix_permissions(object):
             input : str, optional
               Key which holds value that is the filename or absolute path in data
             path : str, optional
-              If absolute path is not specifed in data, path must be expressed
+              If absolute path is not specified in data, path must be expressed
               here
 
             """
@@ -74,7 +74,7 @@ class fix_permissions(object):
             if path:
                 filename = opj(path, filename)
 
-        # check existance of file and that path is not a dir
+        # check existence of file and that path is not a dir
         if exists(filename) and not isdir(filename):
             per = oct(os.stat(filename)[ST_MODE])[-3:]
             st = os.stat(filename)

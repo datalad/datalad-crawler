@@ -195,7 +195,7 @@ def pipeline(dataset, dataset_category, versioned_urls=False, tarballs=True,
         special_remotes=[DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE],
         # many datasets are actually quite small, so we can simply git them up
         # below one didn't work out as it should have -- caused major headache either due to bug here or in annex
-        # and comitting to git large .mat and .h5 files
+        # and committing to git large .mat and .h5 files
         # largefiles="exclude=*.txt and exclude=README and (largerthan=100kb or include=*.gz or include=*.zip)"
         #
         # CRCNS requires authorization, so only README* should go straight under git

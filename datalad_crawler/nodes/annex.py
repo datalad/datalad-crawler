@@ -308,7 +308,7 @@ class Annexificator(object):
         # TODO: backend -- should be fetched from the config I guess... or should we
         # give that duty to the dataset initialization routine to change default backend?
         # Well -- different annexifiers might have different ideas for the backend, but
-        # then those could be overriden via options
+        # then those could be overridden via options
 
         if exists(path):
             if not exists(opj(path, '.git')):
@@ -929,7 +929,7 @@ class Annexificator(object):
             ' D': deleted,  #     rm-ed  smth committed before
             'D ': deleted,  # git rm-ed  smth committed before
             'AD': (staged, deleted)  # so we added, but then removed before committing
-                                     # generaly shouldn't happen but in some tricky S3 cases crawling did happen :-/
+                                     # generally shouldn't happen but in some tricky S3 cases crawling did happen :-/
                                      # TODO: handle "properly" by committing before D happens
         }
 
@@ -1300,7 +1300,7 @@ class Annexificator(object):
 
     # TODO: either separate out commit or allow to pass a custom commit msg?
     def finalize(self, tag=False, existing_tag=None, cleanup=False, aggregate=False):
-        """Finalize operations -- commit uncommited, prune abandoned? etc
+        """Finalize operations -- commit uncommitted, prune abandoned? etc
 
         Parameters
         ----------
@@ -1454,7 +1454,7 @@ class Annexificator(object):
                     lgr.info("Dropping %s", filepath)
                     self.repo.drop([filepath], options=['--force'] if force else [])
                 else:
-                    lgr.debug("Droping nothing since no filename was provided")
+                    lgr.debug("Dropping nothing since no filename was provided")
             else:
                 lgr.debug("Dropping all files in %s", self.repo)
                 self.repo.drop([], options=['--all'] + (['--force'] if force else []))
