@@ -1,3 +1,21 @@
+# 0.8.5 (Mon Apr 19 2021)
+
+#### 🐛 Bug Fix
+
+- Codespelled some obvious typos etc [#100](https://github.com/datalad/datalad-crawler/pull/100) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🏠 Internal
+
+- Add beforeCommitChangelog hook for updating datalad_crawler/version.py [#98](https://github.com/datalad/datalad-crawler/pull/98) ([@jwodder](https://github.com/jwodder))
+- Use Markdown README as-is on PyPI [#99](https://github.com/datalad/datalad-crawler/pull/99) ([@jwodder](https://github.com/jwodder))
+
+#### Authors: 2
+
+- John T. Wodder II ([@jwodder](https://github.com/jwodder))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.8.4 (Thu Apr 15 2021)
 
 #### 🐛 Bug Fix
