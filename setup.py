@@ -32,20 +32,8 @@ cmdclass = {
     'build_examples': BuildRSTExamplesFromScripts,
 }
 
-# PyPI doesn't render markdown yet. Workaround for a sane appearance
-# https://github.com/pypa/pypi-legacy/issues/148#issuecomment-227757822
-README = opj(dirname(__file__), 'README.md')
-try:
-    import pypandoc
-    long_description = pypandoc.convert(README, 'rst')
-except (ImportError, OSError) as exc:
-    # attempting to install pandoc via brew on OSX currently hangs and
-    # pypandoc imports but throws OSError demanding pandoc
-    print(
-        "WARNING: pypandoc failed to import or thrown an error while converting"
-        " README.md to RST: %r   .md version will be used as is" % exc
-    )
-    long_description = open(README).read()
+with open(opj(dirname(__file__), 'README.md')) as fp:
+    long_description = fp.read()
 
 requires = {
     'core': [
@@ -54,8 +42,6 @@ requires = {
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
     ],
     'devel-docs': [
-        # used for converting README.md -> .rst for long_description
-        'pypandoc',
         # Documentation
         'sphinx',
         'sphinx-rtd-theme',
@@ -75,6 +61,7 @@ setup(
     version=version,
     description="DataLad extension package for crawling external web resources into an automated data distribution",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=[pkg for pkg in find_packages('.') if pkg.startswith('datalad')],
     # datalad command suite specs from here
     install_requires=requires['core'],
