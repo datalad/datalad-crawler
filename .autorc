@@ -8,7 +8,7 @@
         [
             "exec",
             {
-                "beforeCommitChangelog": "awk 'NR==1 {print \"__version__ = \\\"\" $2 \"\\\"\"}' CHANGELOG.md > datalad_crawler/version.py && git add datalad_crawler/version.py"
+                "beforeCommitChangelog": "awk 'NR==1 {print \"__version__ = \\\"\" $2 \"\\\"\"}' CHANGELOG.md > \"$(python setup.py --name)\"/version.py && git add \"$(python setup.py --name)\"/version.py"
             }
         ]
     ]
