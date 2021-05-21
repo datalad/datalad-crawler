@@ -254,22 +254,26 @@ class LorisProjectsAPIExtractor(object):
                 'url' : join(self.apibase, file_link),
                 'path': download_dir
             })
-            yield updated(data, {
-                'url' : join(self.apibase, file_link, 'bidsfiles/channels'),
-                'path': download_dir
-            })
-            yield updated(data, {
-                'url' : join(self.apibase, file_link, 'bidsfiles/events'),
-                'path': download_dir
-             })
-            yield updated(data, {
-                'url' : join(self.apibase, file_link, 'bidsfiles/electrodes'),
-                'path': download_dir
-            })
-            # yield updated(data, {
-            #     'url' : join(self.apibase, file_link, 'bidsfiles/json'),
-            #     'path': download_dir
-            # })
+            if file_dict['ChannelFileLink']:
+                yield updated(data, {
+                    'url' : join(self.apibase, file_link, 'bidsfiles/channels'),
+                    'path': download_dir
+                })
+            if file_dict['ElectrodeFileLink']:
+                yield updated(data, {
+                    'url' : join(self.apibase, file_link, 'bidsfiles/electrodes'),
+                    'path': download_dir
+                 })
+            if file_dict['EventFileLink']:
+                yield updated(data, {
+                    'url' : join(self.apibase, file_link, 'bidsfiles/events'),
+                    'path': download_dir
+                })
+            if file_dict['JSONFileLink']:
+                yield updated(data, {
+                    'url' : join(self.apibase, file_link, 'bidsfiles/json'),
+                    'path': download_dir
+                })
             break  # TODO remove this once done testing
 
 
