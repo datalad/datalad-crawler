@@ -18,10 +18,10 @@ from ..nodes.crawl_url import crawl_url
 from ..nodes.annex import Annexificator
 from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
 
-
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
 from logging import getLogger
+
 lgr = getLogger("datalad.crawler.pipelines.kaggle")
 
 
@@ -43,11 +43,11 @@ class ValidateArgs(object):
          :rtype: str
         """
         cmd_example = "datalad crawl-init --template loris-projects-api.py" \
-                       " url=<loris_base_url>/api/v0.0.3" \
-                       " endpoints=projects/<project_name>/images,projects/<project_name>/candidates"
+                      " url=<loris_base_url>/api/v0.0.3/projects" \
+                      " endpoints=<project_name>/images,<project_name>/candidates"
 
         if not self.url:
-            return f"\n Please set url that LORIS API endpoints are relative to.\n" \
+            return f"\n Please set url that LORIS API project endpoints are relative to.\n" \
                    f" Example:  {cmd_example}\n"
 
         if not self.endpoints:
@@ -63,17 +63,17 @@ class ValidateArgs(object):
          :rtype: str
         """
         supported_endpoints = [
-            'projects/<projectName>/images',
-            'projects/<projectName>/bids',
-            'projects/<projectName>/data_releases',
-            'projects/<projectName>/recordings'
+            "<projectName>/images",
+            "<projectName>/bids",
+            "<projectName>/data_releases",
+            "<projectName>/recordings"
         ]
         supported_endpoints_pattern = re.compile(
-            r'^projects/.+/((images/?)|(bids/?)|(data_releases/?)|(recordings/?)$)'
+            r'^.+/((images/?)|(bids/?)|(data_releases/?)|(recordings/?)$)'
         )
 
         unsupported_endpoint_bool = False
-        for endpoint in self.endpoints.split(','):
+        for endpoint in self.endpoints.split(","):
             if not re.match(supported_endpoints_pattern, endpoint):
                 unsupported_endpoint_bool = True
 
@@ -87,8 +87,8 @@ class LorisProjectsAPIExtractor(object):
     Class that extracts files from the LORIS API projects endpoints
     """
 
-    def __init__(self, apibase=None, endpoints_list=None):
-        self.apibase = apibase
+    def __init__(self, projects_api_base=None, endpoints_list=None):
+        self.api_base = projects_api_base.replace("/projects", "")
         self.endpoints_list = endpoints_list
 
     def extract_project_images(self, data):
@@ -104,41 +104,56 @@ class LorisProjectsAPIExtractor(object):
         :param data: the JSON response of the queried API endpoint
          :type data: dict
         """
-        response = json.loads(data['response'])
+        response = json.loads(data["response"])
 
-        for file_dict in response['Images']:
-            candid   = file_dict['Candidate']
-            visit    = file_dict['Visit']
-            filename = basename(file_dict['Link'])
+        for file_dict in response["Images"]:
+            candid = file_dict["Candidate"]
+            pscid = file_dict["PSCID"]
+            visit = file_dict["Visit"]
+            filename = basename(file_dict["Link"])
 
-            if filename.endswith('.mnc'):
+            if filename.endswith(".mnc"):
                 # File organization of MINC files
                 yield updated(data, {
-                    "url" : join(self.apibase, 'candidates', candid),
+                    "url": join(self.api_base, "candidates", candid),
                     "filename": "candidate.json",
                     "path": join("MINC_images", candid)
                 })
                 yield updated(data, {
-                    "url" : join(self.apibase, 'candidates', candid, visit),
+                    "url": join(self.api_base, "candidates", candid, visit),
                     "filename": "visit.json",
                     "path": join("MINC_images", candid, visit)
                 })
                 yield updated(data, {
-                    "url" : join(self.apibase, 'candidates', candid, visit, 'images'),
-                    "path": join("MINC_images", candid, visit, 'images')
+                    "url": join(self.api_base, "candidates", candid, visit, "images"),
+                    "path": join("MINC_images", candid, visit, "images")
                 })
                 yield updated(data, {
-                    "url" : self.apibase + file_dict["Link"],
-                    "path": join("MINC_images", candid, visit, 'images')
+                    "url": self.api_base + file_dict["Link"],
+                    "path": join("MINC_images", candid, visit, "images")
                 })
-            elif filename.endswith(('.nii', '.nii.gz')):
-                # TODO BIDS file organization
-                # download NIfTI files in sub-<candid>/ses-<visit>/modality
-                # download the sidecar JSON file attached in parameter_file
-                bids_root_dir = 'BIDS_dataset'
-                continue
-
-            break  # TODO remove once done testing
+            elif filename.endswith((".nii", ".nii.gz")):
+                bids_root_dir = "BIDS_dataset"
+                yield updated(data, {
+                    "url": self.api_base + file_dict["Link"],
+                    "path": join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", file_dict["BIDS_subdir"])
+                })
+                yield updated(data, {
+                    "url": self.api_base + file_dict["Link"] + "/bidsfiles/json",
+                    "path": join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", file_dict["BIDS_subdir"])
+                })
+                yield updated(data, {
+                    "url": self.api_base + file_dict["Link"] + "/bidsfiles/bval",
+                    "path": join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", file_dict["BIDS_subdir"])
+                })
+                yield updated(data, {
+                    "url": self.api_base + file_dict["Link"] + "/bidsfiles/bvec",
+                    "path": join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", file_dict["BIDS_subdir"])
+                })
+                yield updated(data, {
+                    "url": self.api_base + file_dict["Link"] + "/bidsfiles/events",
+                    "path": join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", file_dict["BIDS_subdir"])
+                })
 
     def extract_projects_data_releases(self, data):
         """
@@ -148,27 +163,27 @@ class LorisProjectsAPIExtractor(object):
         :param data: the JSON response of the queried API endpoint
          :type data: dict
         """
-        response = json.loads(data['response'])
+        response = json.loads(data["response"])
 
         # determine the latest version of data release
         version = None
         files = []
         for release in response:
-            current_version = release['Data_Release_Version']
+            current_version = release["Data_Release_Version"]
             if not version:
                 version = current_version
-                files = release['Files']
+                files = release["Files"]
             else:
                 version = current_version if current_version > version else version
-                files = release['Files']
+                files = release["Files"]
 
         for file_dict in files:
-            file_name = file_dict['File']
-            file_link = file_dict['Link']
+            file_name = file_dict["File"]
+            file_link = file_dict["Link"]
             yield updated(data, {
-                "url"     : join(self.apibase, file_link),
+                "url": join(self.api_base, file_link),
                 "filename": file_name,
-                "path"    : join("non_imaging_data_releases", str(version))
+                "path": join("non_imaging_data_releases", str(version))
             })
             break
 
@@ -180,56 +195,54 @@ class LorisProjectsAPIExtractor(object):
         :param data: the JSON response of the queried API endpoint
          :type data: dict
         """
-        bids_root_dir = 'BIDS_dataset'
-        response = json.loads(data['response'])
+        bids_root_dir = "BIDS_dataset"
+        response = json.loads(data["response"])
 
-        for key in ['DatasetDescription', 'README', 'BidsValidatorConfig']:
+        for key in ["DatasetDescription", "README", "BidsValidatorConfig"]:
             if key in response.keys():
                 yield updated(data, {
-                    'url' : self.apibase + response[key]['Link'],
-                    'path': bids_root_dir
+                    "url": self.api_base + response[key]["Link"],
+                    "path": bids_root_dir
                 })
 
-        if 'Participants' in response.keys():
+        if "Participants" in response.keys():
             yield updated(data, {
-                'url' : self.apibase + response['Participants']['TsvLink'],
-                'path': bids_root_dir
+                "url": self.api_base + response["Participants"]["TsvLink"],
+                "path": bids_root_dir
             })
             yield updated(data, {
-                'url' : self.apibase + response['Participants']['JsonLink'],
-                'path': bids_root_dir
+                "url": self.api_base + response["Participants"]["JsonLink"],
+                "path": bids_root_dir
             })
 
-        if 'SessionFiles' in response.keys():
-            for file_dict in response['SessionFiles']:
-                candid = 'sub-' + file_dict['Candidate']
-                visit = 'ses-' + file_dict['Visit']
+        if "SessionFiles" in response.keys():
+            for file_dict in response["SessionFiles"]:
+                candid = "sub-" + file_dict["Candidate"]
+                visit = "ses-" + file_dict["Visit"]
                 yield updated(data, {
-                    'url' : self.apibase + file_dict['TsvLink'],
-                    'path': join(bids_root_dir, candid, visit)
+                    "url": self.api_base + file_dict["TsvLink"],
+                    "path": join(bids_root_dir, candid, visit)
                 })
                 yield updated(data, {
-                    'url' : self.apibase + file_dict['JsonLink'],
-                    'path': join(bids_root_dir, candid, visit)
+                    "url": self.api_base + file_dict["JsonLink"],
+                    "path": join(bids_root_dir, candid, visit)
                 })
-                break  # TODO remove this once done testing
 
-        if 'Images' in response.keys():
+        if "Images" in response.keys():
             for file_dict in response["Images"]:
-                candid = 'sub-' + file_dict["Candidate"]
-                visit = 'ses-' + file_dict["Visit"]
-                subfolder = file_dict['Subfolder']
+                candid = "sub-" + file_dict["Candidate"]
+                visit = "ses-" + file_dict["Visit"]
+                subfolder = file_dict["Subfolder"]
                 yield updated(data, {
-                    "url" : self.apibase + file_dict["NiftiLink"],
+                    "url": self.api_base + file_dict["NiftiLink"],
                     "path": join(bids_root_dir, candid, visit, subfolder)
                 })
-                for associated_file in ['JsonLink', 'BvalLink', 'BvecLink', 'EventLink']:
+                for associated_file in ["JsonLink", "BvalLink", "BvecLink", "EventLink"]:
                     if associated_file in file_dict:
                         yield updated(data, {
-                            "url" : self.apibase + file_dict[associated_file],
+                            "url": self.api_base + file_dict[associated_file],
                             "path": join(bids_root_dir, candid, visit, subfolder)
                         })
-                break  # TODO remove this once done testing
 
     def extract_projects_recordings(self, data):
         """
@@ -239,42 +252,44 @@ class LorisProjectsAPIExtractor(object):
         :param data: the JSON response of the queried API endpoint
          :type data: dict
         """
-        response = json.loads(data['response'])
+        response = json.loads(data["response"])
 
-        bids_root_dir = 'BIDS_dataset'
+        bids_root_dir = "BIDS_dataset"
 
-        for file_dict in response['Recordings']:
-            candid    = file_dict['Candidate']
-            visit     = file_dict['Visit']
-            modality  = file_dict['Modality']
-            file_link = file_dict['Link']
-            download_dir = join(bids_root_dir, candid, visit, modality)
-
+        for file_dict in response["Recordings"]:
+            pscid = file_dict["PSCID"]
+            visit = file_dict["Visit"]
+            modality = file_dict["Modality"]
+            file_link = file_dict["RecordingFileLink"]
+            download_dir = join(bids_root_dir, f"sub-{pscid}", f"ses-{visit}", modality)
             yield updated(data, {
-                'url' : join(self.apibase, file_link),
-                'path': download_dir
+                "url": self.api_base + file_link,
+                "path": download_dir
             })
-            if file_dict['ChannelFileLink']:
+            if file_dict["ChannelsFileLink"]:
+                lgr.info("in channels")
                 yield updated(data, {
-                    'url' : join(self.apibase, file_link, 'bidsfiles/channels'),
-                    'path': download_dir
+                    "url": self.api_base + file_dict["ChannelsFileLink"],
+                    "path": download_dir
                 })
-            if file_dict['ElectrodeFileLink']:
+            if file_dict["ElectrodesFileLink"]:
+                lgr.info("in electrodes")
                 yield updated(data, {
-                    'url' : join(self.apibase, file_link, 'bidsfiles/electrodes'),
-                    'path': download_dir
-                 })
-            if file_dict['EventFileLink']:
-                yield updated(data, {
-                    'url' : join(self.apibase, file_link, 'bidsfiles/events'),
-                    'path': download_dir
+                    "url": self.api_base + file_dict["ElectrodesFileLink"],
+                    "path": download_dir
                 })
-            if file_dict['JSONFileLink']:
+            if file_dict["EventsFileLink"]:
+                lgr.info("in events")
                 yield updated(data, {
-                    'url' : join(self.apibase, file_link, 'bidsfiles/json'),
-                    'path': download_dir
+                    "url": self.api_base + file_dict["EventsFileLink"],
+                    "path": download_dir
                 })
-            break  # TODO remove this once done testing
+            if file_dict["JSONFileLink"]:
+                lgr.info("in json")
+                yield updated(data, {
+                    "url": self.api_base + file_dict["JSONFileLink"],
+                    "path": download_dir
+                })
 
 
 def pipeline(url=None, endpoints=None):
@@ -288,7 +303,7 @@ def pipeline(url=None, endpoints=None):
 
     # Checks arguments provided to `datalad crawl-init`
     # (or stored in `.datalad/crawl/crawl.cfg` config file)
-    arg_validation  = ValidateArgs(url, endpoints)
+    arg_validation = ValidateArgs(url, endpoints)
     invalid_message = arg_validation.validate_args()
     if invalid_message:
         raise RuntimeError(invalid_message)
@@ -298,50 +313,50 @@ def pipeline(url=None, endpoints=None):
 
     # Create the annex object
     annex = Annexificator(
-                create=False,
-                statusdb='json',
-                skip_problematic=True,
-                special_remotes=[DATALAD_SPECIAL_REMOTE],
-                options=[
-                    "-c",
-                    "annex.largefiles="
-                    "exclude=README.md and exclude=DATS.json and exclude=logo.png"
-                    " and exclude=.datalad/providers/loris.cfg"
-                    " and exclude=.datalad/crawl/crawl.cfg"
-                    " and exclude=*scans.json"
-                    " and exclude=*bval"
-                    " and exclude=BIDS_dataset/dataset_description.json"
-                    " and exclude=BIDS_dataset/participants.json"
-                ]
+        create=False,
+        statusdb="json",
+        skip_problematic=True,
+        special_remotes=[DATALAD_SPECIAL_REMOTE],
+        options=[
+            "-c",
+            "annex.largefiles="
+            "exclude=README.md and exclude=DATS.json and exclude=logo.png"
+            " and exclude=.datalad/providers/loris.cfg"
+            " and exclude=.datalad/crawl/crawl.cfg"
+            " and exclude=*scans.json"
+            " and exclude=*bval"
+            " and exclude=BIDS_dataset/dataset_description.json"
+            " and exclude=BIDS_dataset/participants.json"
+        ]
     )
 
     # Initialize the LorisProjectsAPIExtractor class
-    endpoints_list = endpoints.split(',')
-    api_extractor  = LorisProjectsAPIExtractor(url, endpoints_list)
+    endpoints_list = endpoints.split(",")
+    api_extractor = LorisProjectsAPIExtractor(url, endpoints_list)
 
     urls_pipe = [crawl_url(url)]
     for endpoint in endpoints_list:
         endpoint_url = join(url, endpoint)
         lgr.info("Creating a pipeline to crawl data files from %s", join(url, endpoint))
-        if re.match(r'^projects/.+/images/?$', endpoint):
+        if re.match(r'^.+/images/?$', endpoint):
             urls_pipe += [
                 crawl_url(endpoint_url),
                 api_extractor.extract_project_images,
                 annex
             ]
-        elif re.match(r'^projects/.+/recordings/?$', endpoint):
+        elif re.match(r'^.+/recordings/?$', endpoint):
             urls_pipe += [
                 crawl_url(endpoint_url),
                 api_extractor.extract_projects_recordings,
                 annex
             ]
-        elif re.match(r'^projects/.+/data_releases/?$', endpoint):
+        elif re.match(r'^.+/data_releases/?$', endpoint):
             urls_pipe += [
                 crawl_url(endpoint_url),
                 api_extractor.extract_projects_data_releases,
                 annex
             ]
-        elif re.match(r'^projects/.+/bids/?$', endpoint):
+        elif re.match(r'^.+/bids/?$', endpoint):
             urls_pipe += [
                 crawl_url(endpoint_url),
                 api_extractor.extract_projects_bids,
