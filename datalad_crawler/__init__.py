@@ -30,5 +30,20 @@ command_suite = (
     ]
 )
 
-from datalad import setup_package
-from datalad import teardown_package
+import datalad.tests.utils
+from datalad import setup_package as _setup_package
+from datalad import teardown_package as _teardown_package
+
+_datalad_default_branch = datalad.tests.utils.DEFAULT_BRANCH
+
+
+def setup_package():
+    # Q&D workaround for not messing for now with datalad specifying default
+    # branch to be not master
+    datalad.tests.utils.DEFAULT_BRANCH = 'master'
+    return _setup_package()
+
+
+def teardown_package():
+    datalad.tests.utils.DEFAULT_BRANCH = _datalad_default_branch
+    return _teardown_package()
