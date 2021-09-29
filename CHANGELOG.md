@@ -1,3 +1,20 @@
+# 0.9.0 (Wed Sep 29 2021)
+
+#### 🚀 Enhancement
+
+- Minimal changes to "ensure" master branch being the default for tests [#106](https://github.com/datalad/datalad-crawler/pull/106) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🐛 Bug Fix
+
+- Discontinue use of obsolete Repo.add_submodule() [#105](https://github.com/datalad/datalad-crawler/pull/105) ([@mih](https://github.com/mih))
+
+#### Authors: 2
+
+- Michael Hanke ([@mih](https://github.com/mih))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.8.5 (Mon Apr 19 2021)
 
 #### 🐛 Bug Fix
