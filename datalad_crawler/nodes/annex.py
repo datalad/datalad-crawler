@@ -728,7 +728,6 @@ class Annexificator(object):
                         self.repo.remove('.', r=True, f=True)  # TODO: might be insufficient if directories etc TEST/fix
                 else:
                     if parent not in existing_branches:
-                        import pdb; pdb.set_trace()
                         raise RuntimeError(
                             "Parent branch %s does not exist. Existing: %s"
                             % (parent, ', '.join(existing_branches)))
