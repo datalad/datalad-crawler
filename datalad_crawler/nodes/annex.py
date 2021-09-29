@@ -66,7 +66,7 @@ class initiate_dataset(object):
     """
 
     def __init__(self, template, dataset_name=None,
-                 path=None, branch=None, backend=None,
+                 path=None, branch='master', backend=None,
                  template_func=None, template_kwargs=None,
                  add_to_super='auto',
                  data_fields=[], add_fields={}, existing=None):
@@ -123,49 +123,24 @@ class initiate_dataset(object):
     def _initiate_dataset(self, path, name):
         lgr.info("Initiating dataset %s" % name)
 
+        initopts = []
         if self.branch is not None:
-            raise NotImplementedError("Disabled for now")
-            # because all the 'create' magic is stuffed into the constructor ATM
-            # we need first to initiate a git repository
-            git_repo = GitRepo(path, create=True)
-            # since we are initiating, that branch shouldn't exist yet, thus --orphan
-            git_repo.checkout(self.branch, options=["--orphan"])
-            # TODO: RF whenevever create becomes a dedicated factory/method
-            # and/or branch becomes an option for the "creator"
+            initopts += ["-b", self.branch]
+
+        ds = create(path=path, force=False, initopts=initopts)
 
         backend = self.backend or cfg.obtain('datalad.crawl.default_backend', default='MD5E')
 
-        try:
-            ds = create(
-                    path=path,
-                    force=False,
-                    # no_annex=False,  # TODO: add as an arg
-                    # Passing save arg based on backend was that we need to save only if
-                    #  custom backend was specified, but now with dataset id -- should always save
-                    # save=not bool(backend),
-                    # annex_version=None,
-                    annex_backend=backend,
-                    #git_opts=None,
-                    #annex_opts=None,
-                    #annex_init_opts=None
-            )
-        except TypeError:
-            # The exception was probably due to using annex_backend with new
-            # create. Try again without that parameter.
-            #
-            # TODO: Once the minimum DataLad version is 0.12.0, the create call
-            # above should be dropped.
-            ds = create(path=path, force=False)
-            if self.backend or cfg.get('dataset.crawl.default_backend'):
-                if self.backend:
-                    obsolete_method = "pipeline parameter"
-                else:
-                    obsolete_method = "'dataset.crawl.default_backend'"
-                lgr.warning(
-                    "Using backend configured by 'datalad.repo.backend' (%s). "
-                    "Configuring backend with %s is obsolete.",
-                    cfg.obtain("datalad.repo.backend", default="MD5E"),
-                    obsolete_method)
+        if backend:
+            if self.backend:
+                obsolete_method = "pipeline parameter"
+            else:
+                obsolete_method = "'dataset.crawl.default_backend'"
+            lgr.warning(
+                "Using backend configured by 'datalad.repo.backend' (%s). "
+                "Configuring backend with %s is obsolete.",
+                cfg.obtain("datalad.repo.backend", default="MD5E"),
+                obsolete_method)
 
         if self.add_to_super:
             # place hack from 'add-to-super' times here
@@ -753,7 +728,10 @@ class Annexificator(object):
                         self.repo.remove('.', r=True, f=True)  # TODO: might be insufficient if directories etc TEST/fix
                 else:
                     if parent not in existing_branches:
-                        raise RuntimeError("Parent branch %s does not exist" % parent)
+                        import pdb; pdb.set_trace()
+                        raise RuntimeError(
+                            "Parent branch %s does not exist. Existing: %s"
+                            % (parent, ', '.join(existing_branches)))
                     lgr.info("Checking out %s into a new branch %s" % (parent, branch))
                     self.repo.checkout(parent, options=["-b", branch])
             else:
