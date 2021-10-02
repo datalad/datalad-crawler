@@ -39,6 +39,7 @@ from datalad.downloaders.providers import Providers
 from datalad.api import create
 from datalad.support.gitrepo import GitRepo, _normalize_path
 from datalad.support.annexrepo import AnnexRepo
+from datalad.support.external_versions import external_versions
 from datalad.support.stats import ActivityStats
 from datalad.support.versions import get_versions
 from datalad.support.exceptions import AnnexBatchCommandError
@@ -125,7 +126,14 @@ class initiate_dataset(object):
 
         initopts = []
         if self.branch is not None:
-            initopts += ["-b", self.branch]
+            # init -b was introduced in git 2.28
+            if external_versions['cmd:git'] < '2.28':
+                if self.branch != 'master':  # AFAIK t would be the default one anyways
+                    raise NotImplementedError(
+                        "Cannot specify branch with git < 2.28. Current git: %s"
+                        % external_versions['cmd:git'])
+            else:
+                initopts += ["-b", self.branch]
 
         ds = create(path=path, force=False, initopts=initopts)
 
