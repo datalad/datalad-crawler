@@ -1,3 +1,15 @@
+# 0.9.1 (Sat Oct 02 2021)
+
+#### 🐛 Bug Fix
+
+- BF: Do not pass -b master on older gits -- not supported [#107](https://github.com/datalad/datalad-crawler/pull/107) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 1
+
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.0 (Wed Sep 29 2021)
 
 #### 🚀 Enhancement
