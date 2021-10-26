@@ -36,7 +36,10 @@ from datalad.utils import try_multiple
 from datalad.utils import assure_list
 
 from datalad.downloaders.providers import Providers
-from datalad.api import create
+from datalad.api import (
+    create,
+    Dataset,
+)
 from datalad.support.gitrepo import GitRepo, _normalize_path
 from datalad.support.annexrepo import AnnexRepo
 from datalad.support.external_versions import external_versions
@@ -1264,15 +1267,18 @@ class Annexificator(object):
             stats = data.get('datalad_stats', ActivityStats())
             archive = self._get_fpath(data, stats)
             # TODO: may be adjust annex_options
-            annex = add_archive_content(
-                archive, annex=self.repo,
-                key=False, commit=commit, allow_dirty=True,
+            add_archive_content(
+                archive,
+                dataset=Dataset(self.repo.path),
+                key=False,
+                commit=commit,
+                allow_dirty=True,
                 annex_options=self.options,
                 stats=stats,
                 **aac_kwargs
             )
             self._states.add("Added files from extracted archives")
-            assert (annex is self.repo)  # must be the same annex, and no new one created
+            #assert (annex is self.repo)  # must be the same annex, and no new one created
             # to propagate statistics from this call into commit msg since we commit=False here
             # we update data with stats which gets a new instance if wasn't present
             yield updated(data, {'datalad_stats': stats})
