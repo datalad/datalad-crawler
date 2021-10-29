@@ -41,7 +41,6 @@ from datalad.support.gitrepo import GitRepo, _normalize_path
 from datalad.support.annexrepo import AnnexRepo
 from datalad.support.external_versions import external_versions
 from datalad.support.stats import ActivityStats
-from datalad.support.versions import get_versions
 from datalad.support.exceptions import AnnexBatchCommandError
 from datalad.support.network import get_url_straight_filename
 from datalad.support.network import get_url_disposition_filename
@@ -52,6 +51,7 @@ from datalad_crawler.pipeline import initiate_pipeline_config
 from datalad_crawler.dbs.files import PhysicalFileStatusesDB
 from datalad_crawler.dbs.files import JsonFileStatusesDB
 from datalad_crawler.dbs.versions import SingleVersionDB
+from datalad_crawler.support.versions import get_versions
 from datalad.customremotes.base import init_datalad_remote
 from datalad.dochelpers import exc_str
 
