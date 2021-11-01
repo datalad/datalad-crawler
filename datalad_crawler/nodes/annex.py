@@ -58,6 +58,7 @@ from datalad_crawler.support.versions import get_versions
 from datalad.customremotes.base import init_datalad_remote
 from datalad.dochelpers import exc_str
 
+from inspect import signature
 from logging import getLogger
 
 lgr = getLogger('datalad.crawl.annex')
@@ -1267,20 +1268,36 @@ class Annexificator(object):
             stats = data.get('datalad_stats', ActivityStats())
             archive = self._get_fpath(data, stats)
             # TODO: may be adjust annex_options
-            add_archive_content(
-                archive,
-                dataset=Dataset(self.repo.path),
-                key=False,
-                commit=commit,
-                allow_dirty=True,
-                annex_options=self.options,
-                stats=stats,
-                **aac_kwargs
-            )
+
+            # an interoperability hack: add-archive-content became a dataset
+            # method in datalad#6105. Adjust the function call accordingly:
+            if 'dataset' in str(signature(add_archive_content)):
+                add_archive_content(
+                    archive,
+                    dataset=Dataset(self.repo.path),
+                    key=False,
+                    commit=commit,
+                    allow_dirty=True,
+                    annex_options=self.options,
+                    stats=stats,
+                    **aac_kwargs
+                )
+            else:
+                # add-archive-content is not a dataset method
+                annex = add_archive_content(archive,
+                                            annex=self.repo,
+                                            key = False,
+                                            commit = commit,
+                                            allow_dirty = True,
+                                            annex_options=self.options,
+                                            stats=stats,
+                                            **aac_kwargs
+                                            )
+                assert (annex is self.repo)  # must be the same annex, and no
+                # new one created to propagate statistics from this call into
+                # commit msg since we commit=False here we update data with
+                # stats which gets a new instance if wasn't present
             self._states.add("Added files from extracted archives")
-            #assert (annex is self.repo)  # must be the same annex, and no new one created
-            # to propagate statistics from this call into commit msg since we commit=False here
-            # we update data with stats which gets a new instance if wasn't present
             yield updated(data, {'datalad_stats': stats})
 
         return _add_archive_content
