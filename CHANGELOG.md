@@ -1,3 +1,20 @@
+# 0.9.2 (Fri Nov 05 2021)
+
+#### 🐛 Bug Fix
+
+- RF: moved support/versions.py from datalad core [#111](https://github.com/datalad/datalad-crawler/pull/111) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🏠 Internal
+
+- RF: Adjust for add-archive-content refactoring in datalad core [#112](https://github.com/datalad/datalad-crawler/pull/112) ([@adswa](https://github.com/adswa))
+
+#### Authors: 2
+
+- Adina Wagner ([@adswa](https://github.com/adswa))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.1 (Sat Oct 02 2021)
 
 #### 🐛 Bug Fix
