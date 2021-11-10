@@ -1,4 +1,7 @@
-from ..utils import flatten
+from ..utils import (
+    flatten,
+    get_func_kwargs_doc,
+)
 
 from datalad.tests.utils import assert_equal
 
@@ -21,3 +24,9 @@ def test_flatten():
     assert_equal(flatten(({0}, (1, 2)), types=(set, tuple)), (0, 1, 2))
     assert_equal(flatten([(0,), {1: 2}], types=(list, tuple, dict), base_type=tuple),
                  (0, 1))
+
+
+def test_get_func_kwargs_doc():
+    def some_func(arg1, kwarg1=None, kwarg2="bu"):
+        return
+    assert_equal(get_func_kwargs_doc(some_func), ['arg1', 'kwarg1', 'kwarg2'])  

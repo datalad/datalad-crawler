@@ -6,10 +6,12 @@
 #   copyright and license terms.
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
-"""Various utils which might be later moved into datalad core
+"""Various utils which were moved from datalad core or might be later moved into it
 
 To simplify such refactoring tests should be provided here as well
 """
+
+import inspect
 
 
 def flatten(l, types=None, base_type=None):
@@ -38,3 +40,20 @@ def flatten(l, types=None, base_type=None):
                base_type()) \
             if isinstance(l, types) \
             else base_type((l,))
+
+
+# moved from datalad core, made python 3 specific
+def get_func_kwargs_doc(func):
+    """ Provides args for a function
+
+    Parameters
+    ----------
+    func:
+      function from which args are being requested
+
+    Returns
+    -------
+    list
+      of the args that a function takes in
+    """
+    return inspect.getfullargspec(func)[0]
