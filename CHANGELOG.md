@@ -1,3 +1,15 @@
+# 0.9.3 (Wed Nov 10 2021)
+
+#### 🐛 Bug Fix
+
+- RF: move (and minimal RF) get_func_kwargs_doc from core [#113](https://github.com/datalad/datalad-crawler/pull/113) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 1
+
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.2 (Fri Nov 05 2021)
 
 #### 🐛 Bug Fix
