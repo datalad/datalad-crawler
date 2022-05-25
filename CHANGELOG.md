@@ -1,3 +1,15 @@
+# 0.9.4 (Wed May 25 2022)
+
+#### 🏠 Internal
+
+- BF: nose is ATM run time requirement as well of crawler (see comment) [#115](https://github.com/datalad/datalad-crawler/pull/115) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 1
+
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.3 (Wed Nov 10 2021)
 
 #### 🐛 Bug Fix
