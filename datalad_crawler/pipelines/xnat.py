@@ -48,7 +48,7 @@ from datalad.dochelpers import exc_str
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.xnat")
 
-from datalad.tests.utils import eq_
+from datalad.tests.utils_pytest import eq_
 from datalad.utils import assure_list, assure_bool
 
 def list_to_dict(l, field):

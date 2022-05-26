@@ -140,7 +140,7 @@ def superdataset_pipeline():
     return [
         crawl_url("http://crcns.org/data-sets",
             matchers=[a_href_match('.*/data-sets/[^#/]+$')]),
-#                      a_href_match('.*/data-sets/[\S+/\S+'),]),
+#                      a_href_match(r'.*/data-sets/[\S+/\S+'),]),
         # TODO:  such matchers don't have state so if they get to the same url from multiple
         # pages they pass that content twice.  Implement state to remember yielded results +
         # .reset() for nodes with state so we could first get through the pipe elements and reset
@@ -219,7 +219,7 @@ def pipeline(dataset, dataset_category, versioned_urls=False, tarballs=True,
     elif data_origin == 'urls':
         urls_pipe = [ # Download all the archives found on the project page
             crawler,
-            a_href_match('.*/.*\.(tgz|tar.*|zip)', min_count=1),
+            a_href_match(r'.*/.*\.(tgz|tar.*|zip)', min_count=1),
         ]
     else:
         raise ValueError(data_origin)
@@ -254,7 +254,7 @@ def pipeline(dataset, dataset_category, versioned_urls=False, tarballs=True,
         [   # nested pipeline so we could skip it entirely if nothing new to be merged
             annex.merge_branch('incoming', strategy='theirs', commit=False, allow_unrelated=True),  #, skip_no_changes=False),
             [   # Pipeline to augment content of the incoming and commit it to master
-                find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
+                find_files(r"\.(zip|tgz|tar(\..+)?)$", fail_if_none=tarballs),  # So we fail if none found -- there must be some! ;)),
                 annex.add_archive_content(
                     existing='archive-suffix',
                     # Since inconsistent and seems in many cases no leading dirs to strip, keep them as provided

@@ -88,7 +88,7 @@ def pipeline(prefix=None, bucket='openfmri', tag=True, skip_problematic=False):
 
     return [
         crawl_s3(bucket=bucket, prefix=prefix, strategy='commit-versions',
-                 repo=annex.repo, recursive=True, exclude='\.git/'),
+                 repo=annex.repo, recursive=True, exclude=r'\.git/'),
         sub_s3_to_http,
         switch('datalad_action',
                {

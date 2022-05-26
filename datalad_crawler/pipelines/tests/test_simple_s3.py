@@ -9,17 +9,17 @@
 
 from glob import glob
 
-from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines as _tsp
+from datalad_crawler.pipelines.tests.test_utils import _test_smoke_pipelines as _tsp
 from datalad.utils import chpwd
 from datalad.utils import _path_
-from datalad.tests.utils import eq_
-from datalad.tests.utils import assert_false
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import externals_use_cassette
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import ok_clean_git
-from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils_pytest import eq_
+from datalad.tests.utils_pytest import assert_false
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import externals_use_cassette
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import ok_clean_git
+from datalad.tests.utils_pytest import ok_file_under_git
 from ..simple_s3 import pipeline
 from datalad.api import crawl_init
 from datalad.api import crawl
@@ -27,23 +27,27 @@ from datalad.api import create
 from datalad.support.annexrepo import AnnexRepo
 from datalad.downloaders.tests.utils import get_test_providers
 
+import pytest
+
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
 
 
-def test_smoke_pipelines():
-    yield _tsp, pipeline, ["b"]
+@pytest.mark.parametrize("func,args,kwargs", [
+    (pipeline, ["b"], {}),
     # to_http everywhere just to make it faster by avoiding initiating datalad
     # special remote
-    yield _tsp, pipeline, ["b"], dict(to_http=True, prefix="prefix")
-    yield _tsp, pipeline, ["b"], dict(to_http=True)
-    yield _tsp, pipeline, ["b"], dict(to_http=True, archive=True)
-    yield _tsp, pipeline, ["b"], dict(to_http=True, directory="subdataset", prefix="some/")
-
+    (pipeline, ["b"], dict(to_http=True, prefix="prefix")),
+    (pipeline, ["b"], dict(to_http=True)),
+    (pipeline, ["b"], dict(to_http=True, archive=True)),
+    (pipeline, ["b"], dict(to_http=True, directory="subdataset", prefix="some/")),
+])
+def test_smoke_pipelines(func, args, kwargs):
+    _tsp(pipeline, args, kwargs)
 
 @with_tempfile
 @skip_if_no_network
-def _test_drop(path, drop_immediately):
+def _test_drop(path=None, *, drop_immediately):
     s3url = 's3://datalad-test0-nonversioned'
     providers = get_test_providers(s3url)  # to verify having s3 credentials
     # vcr tape is getting bound to the session object, so we need to
@@ -98,7 +102,7 @@ def test_drop_immediately():
 @with_tempfile
 @use_cassette('test_simple_s3_test2_obscurenames_versioned_crawl')
 @skip_if_no_network
-def test_obscure_names(path):
+def test_obscure_names(path=None):
     bucket = "datalad-test2-obscurenames-versioned"
     get_test_providers('s3://' + bucket)  # to verify having s3 credentials
     create(path)

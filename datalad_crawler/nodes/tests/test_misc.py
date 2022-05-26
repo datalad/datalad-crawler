@@ -11,7 +11,7 @@ import os
 from stat import *
 from os import chmod
 from os.path import join as opj
-from datalad.tests.utils import with_tempfile, eq_, ok_, SkipTest
+from datalad.tests.utils_pytest import with_tempfile, eq_, ok_, assert_raises
 from six import next
 from collections import OrderedDict
 
@@ -33,23 +33,23 @@ from ..misc import debug
 from ..misc import Sink
 from ..misc import fix_url
 from ...pipeline import FinishPipeline
-from datalad.tests.utils import with_tree
+from datalad.tests.utils_pytest import with_tree
 from datalad.utils import updated
 from ...tests.test_pipeline import _out
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_generator
-from datalad.tests.utils import assert_in
-from datalad.tests.utils import assert_re_in
-from datalad.tests.utils import assert_equal
-from datalad.tests.utils import assert_false
-from datalad.tests.utils import swallow_logs
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import ok_generator
+from datalad.tests.utils_pytest import assert_in
+from datalad.tests.utils_pytest import assert_re_in
+from datalad.tests.utils_pytest import assert_equal
+from datalad.tests.utils_pytest import assert_false
+from datalad.tests.utils_pytest import swallow_logs
 
 import logging
 
 from mock import patch
-from nose.tools import eq_, assert_raises
-from nose import SkipTest
+
+import pytest
 
 
 # TODO: redo on a local example
@@ -67,14 +67,14 @@ def test_get_disposition_filename():
 
 
 @with_tempfile(mkdir=True)
-def test_fix_permissions(outdir):
+def test_fix_permissions(outdir=None):
     filepath = opj(outdir, 'myfile.txt')
     filepath2 = opj(outdir, 'badfile.py')
     filepath3 = opj(outdir, 'nopath.txt')
     with open(filepath, 'w'), open(filepath2, 'w'), open(filepath3, 'w'):
         pass
 
-    gen = fix_permissions('\.(txt|csv)', True, 'filename')
+    gen = fix_permissions(r'\.(txt|csv)', True, 'filename')
 
     # make file executable for those that can read it
     filename = opj(outdir, 'myfile.txt')
@@ -98,7 +98,7 @@ def test_fix_permissions(outdir):
     nopath = opj(outdir, 'nopath.txt')
     chmod(nopath, 0o643)
     datafile = {'url': 'http://mapping.org/docs/?num=45', 'filename': 'nopath.txt'}
-    gen = fix_permissions('\.txt', True, 'filename', outdir)
+    gen = fix_permissions(r'\.txt', True, 'filename', outdir)
     eq_(list(gen(datafile)), [{'url': 'http://mapping.org/docs/?num=45', 'filename': 'nopath.txt'}])
     eq_(oct(os.stat(filename)[ST_MODE])[-3:], '753')
 
@@ -321,7 +321,7 @@ def test_func_to_node():
 def test_sub():
     s = sub({
         'url': {
-            '(http)s?(://.*openfmri\.s3\.amazonaws.com/|://s3\.amazonaws\.com/openfmri/)': r'\1\2'
+            r'(http)s?(://.*openfmri\.s3\.amazonaws.com/|://s3\.amazonaws\.com/openfmri/)': r'\1\2'
         }
     })
     ex1 = {'url': 'http://example.com'}
@@ -339,15 +339,15 @@ def test_sub():
 
 
 @with_tree(tree={'1': '1', '1.txt': '2'})
-def test_find_files(d):
+def test_find_files(d=None):
     assert_equal(sorted(list(sorted(x.items())) for x in find_files('.*', topdir=d)({})),
                  [[('filename', '1'), ('path', d)], [('filename', '1.txt'), ('path', d)]])
-    assert_equal(list(find_files('.*\.txt', topdir=d)({})), [{'path': d, 'filename': '1.txt'}])
+    assert_equal(list(find_files(r'.*\.txt', topdir=d)({})), [{'path': d, 'filename': '1.txt'}])
     assert_equal(list(find_files('notmatchable', topdir=d)({})), [])
     assert_raises(RuntimeError, list, find_files('notmatchable', topdir=d, fail_if_none=True)({}))
 
     # and fail_if_none should operate globally i.e. this should be fine
-    ff = find_files('.*\.txt', topdir=d, fail_if_none=True)
+    ff = find_files(r'.*\.txt', topdir=d, fail_if_none=True)
     assert_equal(list(ff({})), [{'path': d, 'filename': '1.txt'}])
     os.unlink(opj(d, '1.txt'))
     assert_equal(list(ff({})), [])
@@ -382,7 +382,7 @@ def test_switch():
     data_missing = {'f1': 3, 'f2': 'x_'}
     with assert_raises(KeyError) as cme:
         list(switch_node(data_missing))
-    assert_in('Found no matches for f1 == 3 among', str(cme.exception))
+    assert_in('Found no matches for f1 == 3 among', str(cme.value))
 
     assert_raises(KeyError, list, switch_node(data_missing))
     switch_node.missing = 'skip'
@@ -427,7 +427,7 @@ def test_switch_re():
     with assert_raises(KeyError) as cme:
         list(switch_node(data_missing))
     assert_re_in('Found no matches for f1 == .xxxxx. matching one of',
-                 cme.exception.args)
+                 cme.value.args)
 
     # but in the 2nd case, the thing is a sub-pipeline so it behaves as such without spitting
     # out its output
@@ -448,7 +448,12 @@ def test_switch_re():
     assert_equal(out, [{'f1': 'empty', 'f2': 'x_'}])
 
 
-def _test_debug(msg, args=()):
+@pytest.mark.parametrize("msg,args", [
+    ("About to run", ()),
+    ("Ran node .* which yielded 1 times", ('after',)),
+    ("Ran node .* which yielded 0 times", ('empty',)),
+])
+def test_debug(msg, args):
     if 'empty' in args:
         def node(d):
             # just so Python marks it as a generator
@@ -467,12 +472,6 @@ def _test_debug(msg, args=()):
             list(d1(data))
             set_trace.assert_called_once_with()
             cml.assert_logged(msg, level='INFO')
-
-
-def test_debug():
-    yield _test_debug, "About to run"
-    yield _test_debug, "Ran node .* which yielded 1 times", ('after',)
-    yield _test_debug, "Ran node .* which yielded 0 times", ('empty',)
 
 
 def test_fix_url():

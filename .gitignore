@@ -1,6 +1,6 @@
 .pybuild/
 /.idea
-.coverage
+.coverage*
 /venv*
 /cfgs
 /dist

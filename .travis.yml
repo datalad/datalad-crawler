@@ -17,9 +17,9 @@ env:
     - BOTO_CONFIG=/tmp/nowhere
     - DATALAD_TESTS_SSH=1
     - DATALAD_LOG_CMD_ENV=GIT_SSH_COMMAND
-    - TESTS_TO_PERFORM=
-    - NOSE_OPTS=-s
-    #- NOSE_SELECTION_OP="not "   # so it would be "not (integration or usecase)"
+    - TESTS_TO_PERFORM=datalad_crawler
+    - PYTEST_OPTS=-s
+    #- PYTEST_SELECTION_OP="not "   # so it would be "not (integration or usecase)"
     # Special settings/helper for combined coverage from special remotes execution
     - COVERAGE=coverage
     - DATALAD_DATASETS_TOPURL=http://datasets-tests.datalad.org
@@ -61,17 +61,17 @@ script:
   # Test installation system-wide
   - sudo pip install .
   # Run tests
-  # -A "$NOSE_SELECTION_OP(integration or usecase or slow)"
+  # -m "$PYTEST_SELECTION_OP(integration or usecase or slow)"
   - http_proxy=
     PATH=$PWD/tools/coverage-bin:$PATH
-    $NOSE_WRAPPER python -m nose $NOSE_OPTS
+    pytest $PYTEST_OPTS
       -v
-      --with-doctest
-      --with-cov --cover-package datalad_crawler
-      --logging-level=INFO
+      --cov datalad_crawler
+      --log-cli-level=INFO
+      --pyargs
       $TESTS_TO_PERFORM
   #- if [ ! "${DATALAD_LOG_LEVEL:-}" = 2 ]; then
-  #      PYTHONPATH=$PWD $NOSE_WRAPPER make -C docs html doctest;
+  #      PYTHONPATH=$PWD make -C docs html doctest;
   #  fi
   # Report WTF information using system wide installed version
   - datalad wtf

@@ -9,7 +9,7 @@
 
 from os.path import join as opj
 
-from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
+from datalad_crawler.pipelines.tests.test_utils import _test_smoke_pipelines
 from ...nodes.annex import (
     Annexificator,
     initiate_dataset,
@@ -19,19 +19,20 @@ from datalad.utils import chpwd
 from datalad.utils import _path_
 from datalad.support import path as op
 from datalad.support.exceptions import MissingExternalDependency
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import eq_, assert_in
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git, ok_clean_git
-from datalad.tests.utils import usecase
-from datalad.tests.utils import SkipTest
-from datalad.tests.utils import swallow_logs
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import eq_, assert_in
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import serve_path_via_http
+from datalad.tests.utils_pytest import ok_file_has_content
+from datalad.tests.utils_pytest import ok_file_under_git, ok_clean_git
+from datalad.tests.utils_pytest import usecase
+from datalad.tests.utils_pytest import swallow_logs
 from ..simple_with_archives import pipeline
 from datalad.api import create
 
 from datalad.api import crawl, crawl_init
+
+import pytest
 
 import logging
 from logging import getLogger
@@ -39,7 +40,7 @@ lgr = getLogger('datalad.crawl.tests')
 
 
 def test_smoke_pipelines():
-    yield _test_smoke_pipelines, pipeline, ["random_url"]
+    _test_smoke_pipelines(pipeline, ["random_url"])
 
 from .test_balsa import TEST_TREE1
 
@@ -48,7 +49,7 @@ from .test_balsa import TEST_TREE1
 @with_tree(tree=TEST_TREE1, archives_leading_dir=False)
 @serve_path_via_http
 @with_tempfile
-def test_simple1(ind, topurl, outd):
+def test_simple1(ind=None, topurl=None, outd=None):
 
     list(initiate_dataset(
         template="simple_with_archives",
@@ -94,11 +95,21 @@ if (external_versions['datalad'] >= '0.11.2'
     })
 
 
+@pytest.mark.parametrize("gz", [
+    False,
+    pytest.param(
+        True,
+        marks=pytest.mark.skipif(
+            'compressed.dat.gz' not in TEST_TREE2,
+            reason="datalad 0.11.2+ required",
+        )
+    ),
+])
 @usecase  # created with
 @with_tree(tree=TEST_TREE2, archives_leading_dir=False)
 @serve_path_via_http
 @with_tempfile
-def check_crawl_autoaddtext(gz, ind, topurl, outd):
+def test_crawl_autoaddtext(ind=None, topurl=None, outd=None, *, gz):
     ds = create(outd)
     ds.run_procedure("cfg_text2git")
     with chpwd(outd):  # TODO -- dataset argument
@@ -107,7 +118,7 @@ def check_crawl_autoaddtext(gz, ind, topurl, outd):
             'a_href_match_': '.*',
         }
         if gz:
-            template_kwargs['archives_re'] = "\.gz$"
+            template_kwargs['archives_re'] = r"\.gz$"
         crawl_init(
             template_kwargs
             , save=True
@@ -116,7 +127,7 @@ def check_crawl_autoaddtext(gz, ind, topurl, outd):
         try:
             crawl()
         except MissingExternalDependency as exc:
-            raise SkipTest(exc_str(exc))
+            pytest.skip(exc_str(exc))
     ok_clean_git(outd)
     ok_file_under_git(outd, "anothertext", annexed=False)
     ok_file_under_git(outd, "d/textfile", annexed=False)
@@ -129,17 +140,11 @@ def check_crawl_autoaddtext(gz, ind, topurl, outd):
         else:
             ok_file_under_git(outd, "compressed.dat.gz", annexed=True)
     else:
-        raise SkipTest("Need datalad >= 0.11.2 to test .gz files decompression")
-
-
-def test_crawl_autoaddtext():
-    yield check_crawl_autoaddtext, False
-    if 'compressed.dat.gz' in TEST_TREE2:
-        yield check_crawl_autoaddtext, True
+        pytest.skip("Need datalad >= 0.11.2 to test .gz files decompression")
 
 
 @with_tempfile(mkdir=True)
-def test_warning_no_annex_but_incoming_pipeline(outd):
+def test_warning_no_annex_but_incoming_pipeline(outd=None):
     with chpwd(outd):  # TODO -- dataset argument
         annex = Annexificator()
         incoming_pipeline = [[[annex]]]  # deep deep inside

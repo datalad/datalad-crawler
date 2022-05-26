@@ -15,20 +15,20 @@ except ImportError:
         """Trimmed down helper"""
         return UserPassword("github", "does not matter")
 
-from datalad.tests.utils import (
-    SkipTest,
+from datalad.tests.utils_pytest import (
     assert_false,
     assert_greater,
     skip_if_no_network,
     with_tempfile,
 )
+import pytest
 
 
 @skip_if_no_network
 @with_tempfile
-def test_crawl(tempd):
+def test_crawl(tempd=None):
     if not _get_github_cred().is_known:
-        raise SkipTest("no github credential")
+        pytest.skip("no github credential")
     ds = create(tempd)
     with chpwd(tempd):
         crawl_init(

@@ -237,13 +237,13 @@ def pipeline(dataset_id, url=TOPURL):
             annex.merge_branch('incoming', one_commit_at_a_time=True, strategy='theirs', commit=False),
             [
                {'loop': True},
-               find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),
+               find_files(r"\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),
                annex.add_archive_content(
                    existing='archive-suffix',
                    strip_leading_dirs=True,
                    leading_dirs_depth=1,
                    delete=True,
-                   exclude=['(^|%s)\._' % os.path.sep],
+                   exclude=[r'(^|%s)\._' % os.path.sep],
                ),
             ],
             balsa.verify_files,

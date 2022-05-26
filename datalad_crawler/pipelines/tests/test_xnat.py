@@ -30,18 +30,19 @@ from datalad.api import clean
 from datalad.utils import chpwd
 from datalad.utils import find_files
 from datalad.utils import swallow_logs
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import SkipTest
-from datalad.tests.utils import eq_, assert_not_equal, ok_, ok_startswith
-from datalad.tests.utils import assert_in, assert_is_generator
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import eq_, assert_not_equal, ok_, ok_startswith
+from datalad.tests.utils_pytest import assert_in, assert_is_generator
+from datalad.tests.utils_pytest import skip_if_no_module
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import serve_path_via_http
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import ok_file_has_content
+from datalad.tests.utils_pytest import ok_file_under_git
 from datalad.downloaders.tests.utils import get_test_providers
+
+import pytest
 
 import logging
 from logging import getLogger
@@ -56,7 +57,7 @@ from ..xnat import XNATServer
 from ..xnat import PROJECT_ACCESS_TYPES
 from ..xnat import superdataset_pipeline
 from ..xnat import pipeline
-from datalad.tests.utils import skip_if_no_network
+from datalad.tests.utils_pytest import skip_if_no_network
 
 NITRC_IR = 'https://www.nitrc.org/ir'
 CENTRAL_XNAT = 'https://central.xnat.org'
@@ -68,13 +69,18 @@ def skip_xnat(func):
     def newfunc(*args, **kwargs):
         skip_if_no_network()
         if not os.getenv('DATALAD_TEST_XNAT'):
-            raise SkipTest('Run this test by setting DATALAD_TEST_XNAT')
+            pytest.skip('Run this test by setting DATALAD_TEST_XNAT')
         return func(*args, **kwargs)
     return newfunc
 
 
 @skip_xnat
-def check_basic_xnat_interface(url, project, empty_project, subjects):
+@pytest.mark.parametrize("url,project,empty_project,subjects", [
+    (NITRC_IR, 'fcon_1000', None, ['xnat_S00401', 'xnat_S00447']),
+    (CENTRAL_XNAT, 'CENTRAL_OASIS_LONG', 'ADHD200', ['OAS2_0001', 'OAS2_0176']),
+])
+@use_cassette('test_basic_xnat_interface')
+def test_basic_xnat_interface(url, project, empty_project, subjects):
     nitrc = XNATServer(url)
     projects = nitrc.get_projects()
     # verify that we still have projects we want!
@@ -115,19 +121,9 @@ def check_basic_xnat_interface(url, project, empty_project, subjects):
         # there should be more files due to multiple experiments which we didn't actually check
         assert len(all_files) > len(files1) + len(files2)
 
-# skip_xnat is on check_basic_xnat_interface()
-@use_cassette('test_basic_xnat_interface')
-def test_basic_xnat_interface():
-    for url, project, empty_project, subjects in [
-        (NITRC_IR, 'fcon_1000', None, ['xnat_S00401', 'xnat_S00447']),
-        (CENTRAL_XNAT, 'CENTRAL_OASIS_LONG', 'ADHD200', ['OAS2_0001', 'OAS2_0176']),
-    ]:
-        yield check_basic_xnat_interface, url, project, empty_project, subjects
-
-
 @skip_xnat
 @with_tempfile(mkdir=True)
-def test_smoke_pipelines(d):
+def test_smoke_pipelines(d=None):
     # Just to verify that we can correctly establish the pipelines
     AnnexRepo(d, create=True)
     with chpwd(d):
@@ -139,7 +135,7 @@ def test_smoke_pipelines(d):
 
 @skip_xnat
 @with_tempfile(mkdir=True)
-def test_nitrc_superpipeline(outd):
+def test_nitrc_superpipeline(outd=None):
     with chpwd(outd):
         pipeline = superdataset_pipeline(NITRC_IR)
         out = run_pipeline(pipeline)
@@ -152,7 +148,7 @@ test_nitrc_superpipeline.tags = ['integration']
 
 @skip_xnat
 @with_tempfile
-def test_nitrc_pipeline(outd):
+def test_nitrc_pipeline(outd=None):
     get_test_providers('https://www.nitrc.org/ir/')
     from datalad.distribution.dataset import Dataset
     ds = Dataset(outd).create()
