@@ -38,7 +38,8 @@ before_install:
   # install git-annex with the relevant bits
   # no recommends to avoid inheriting the entire multimedia stack
   - travis_retry sudo eatmydata apt-get install --no-install-recommends git-annex-standalone aria2 git-remote-gcrypt lsof gnupg nocache p7zip-full
-  - pip install --upgrade pip
+  # upgrade of importlib-metadata due to https://github.com/pypa/setuptools/issues/3293
+  - pip install --upgrade pip importlib-metadata
 
 install:
   # Install standalone build of git-annex for the recent enough version
