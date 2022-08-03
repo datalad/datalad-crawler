@@ -1,3 +1,21 @@
+# 0.9.5 (Wed Aug 03 2022)
+
+#### 🐛 Bug Fix
+
+- DOC: Set language in Sphinx config to en [#118](https://github.com/datalad/datalad-crawler/pull/118) ([@adswa](https://github.com/adswa))
+
+#### 🧪 Tests
+
+- Switch to pytest [#117](https://github.com/datalad/datalad-crawler/pull/117) ([@jwodder](https://github.com/jwodder) [@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 3
+
+- Adina Wagner ([@adswa](https://github.com/adswa))
+- John T. Wodder II ([@jwodder](https://github.com/jwodder))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.4 (Wed May 25 2022)
 
 #### 🏠 Internal
