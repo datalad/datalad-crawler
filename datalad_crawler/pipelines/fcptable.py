@@ -148,7 +148,7 @@ def pipeline(dataset):
                         '|http://www.nitrc.org/frs/downloadlink.php/1635$)':
                             [
                                 {'output': 'outputs'},
-                                crawl_url(matchers=[a_href_match('http://www.nitrc.org/frs/\?group_id=[0-9]+$')]),
+                                crawl_url(matchers=[a_href_match(r'http://www.nitrc.org/frs/\?group_id=[0-9]+$')]),
                                 a_href_match('(http://www.nitrc.org)?/frs/download(link)?.php/'),  # , min_count=1),
                             ],
                     },
@@ -165,13 +165,13 @@ def pipeline(dataset):
             annex.merge_branch('incoming', one_commit_at_a_time=True, strategy='theirs', commit=False),
             [
                {'loop': True},
-               find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),
+               find_files(r"\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),
                annex.add_archive_content(
                    existing='archive-suffix',
                    strip_leading_dirs=True,
                    leading_dirs_depth=1,
                    delete=True,
-                   exclude=['(^|%s)\._' % os.path.sep],
+                   exclude=[r'(^|%s)\._' % os.path.sep],
                ),
             ],
             annex.switch_branch('master'),

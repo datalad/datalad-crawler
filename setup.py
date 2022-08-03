@@ -39,11 +39,6 @@ requires = {
     'core': [
         'datalad>=0.14.0',
         'datalad_deprecated',
-        # Needed due to RFing of datalad to not use nose but pytest
-        # and crawler importing datalad.tests.utils in __init__.py
-        # TODO: remove and RF to use pytest (and avoid that import)
-        # after release of datalad core 0.17.0
-        'nose>=1.3.4',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
     ],
     'devel-docs': [
@@ -52,7 +47,9 @@ requires = {
         'sphinx-rtd-theme',
     ],
     'tests': [
-        'nose>=1.3.4',
+        'datalad>=0.17.0',
+        'pytest>=7.0',
+        'pytest-cov',
         'mock',
     ],
 }

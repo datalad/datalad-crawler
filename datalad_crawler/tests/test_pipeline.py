@@ -9,7 +9,7 @@
 
 from os.path import join as opj
 
-from datalad.tests.utils import skip_if_scrapy_without_selector
+from datalad.tests.utils_pytest import skip_if_scrapy_without_selector
 skip_if_scrapy_without_selector()
 
 from datalad_crawler.nodes.crawl_url import crawl_url
@@ -22,13 +22,13 @@ from datalad_crawler.pipeline import load_pipeline_from_module
 
 from datalad.support.stats import ActivityStats
 
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import eq_, ok_, assert_raises
-from datalad.tests.utils import assert_in
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import eq_, ok_, assert_raises
+from datalad.tests.utils_pytest import assert_in
+from datalad.tests.utils_pytest import skip_if_no_module
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
@@ -58,7 +58,7 @@ class AssertOrder(object):
     'pipeline.py': 'pipeline = lambda: [1]',
     'pipeline2.py': 'pipeline = lambda x: [2*x]',
 })
-def test_load_pipeline_from_script(d):
+def test_load_pipeline_from_script(d=None):
     eq_(load_pipeline_from_module(opj(d, 'pipeline.py')), [1])
     eq_(load_pipeline_from_module(opj(d, 'pipeline2.py'), kwargs=dict(x=2)), [4])
     assert_raises(RuntimeError, load_pipeline_from_module, opj(d, 'unlikelytobethere.py'))

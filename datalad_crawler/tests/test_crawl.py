@@ -14,15 +14,14 @@ __docformat__ = 'restructuredtext'
 
 from mock import patch
 from mock import call
-from nose import SkipTest
 
 from datalad.support.external_versions import external_versions
 
 from datalad.api import crawl
 
-from datalad.tests.utils import assert_cwd_unchanged
-from datalad.tests.utils import assert_equal
-from datalad.tests.utils import with_tempfile
+from datalad.tests.utils_pytest import assert_cwd_unchanged
+from datalad.tests.utils_pytest import assert_equal
+from datalad.tests.utils_pytest import with_tempfile
 from datalad.support.stats import ActivityStats
 from datalad.utils import chpwd
 from datalad.utils import getpwd
@@ -35,7 +34,7 @@ from datalad.utils import _path_
 @patch('datalad_crawler.pipeline.load_pipeline_from_config', return_value=['pipeline'])
 @patch('datalad_crawler.pipeline.run_pipeline', return_value=None)
 # Note that order of patched things as args is reverse for some reason :-/
-def test_crawl_api_chdir(run_pipeline_, load_pipeline_from_config_, chpwd_):
+def test_crawl_api_chdir(run_pipeline_=None, load_pipeline_from_config_=None, chpwd_=None):
     output, stats = crawl('some_path_not_checked', chdir='somedir')
     assert_equal(stats, ActivityStats(datasets_crawled=1))  # nothing was done but we got it
     assert_equal(output, None)
@@ -73,14 +72,14 @@ def test_crawl_api_chdir(run_pipeline_, load_pipeline_from_config_, chpwd_):
 )
 # Note that order of patched things as args is reverse for some reason :-/
 @with_tempfile(mkdir=True)
-def test_crawl_api_recursive(get_subdatasets_, run_pipeline_, load_pipeline_from_config_, get_repo_pipeline_script_path_,
-                             get_lofilename_, chpwd_, tdir):
+def test_crawl_api_recursive(get_subdatasets_=None, run_pipeline_=None, load_pipeline_from_config_=None, get_repo_pipeline_script_path_=None,
+                             get_lofilename_=None, chpwd_=None, tdir=None):
     pwd = getpwd()
     with chpwd(tdir):
         output, stats = crawl(recursive=True)
     assert_equal(pwd, getpwd())
     if external_versions['mock'] < '1.0.1':
-        raise SkipTest("needs a more recent mock which throws exceptions in side_effects")
+        pytest.mark("needs a more recent mock which throws exceptions in side_effects")
     assert_equal(output, [[]]*4 + [None])  # for now output is just a list of outputs
     assert_equal(stats, ActivityStats(datasets_crawled=5, datasets_crawl_failed=1))  # nothing was done but we got it crawled
     chpwd_.assert_has_calls(

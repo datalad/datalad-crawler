@@ -12,20 +12,24 @@ from os.path import join as opj, curdir, sep
 from os.path import realpath
 from ..files import PhysicalFileStatusesDB, JsonFileStatusesDB
 
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import assert_equal
-from datalad.tests.utils import assert_false
-from datalad.tests.utils import assert_true
-from datalad.tests.utils import chpwd
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import assert_equal
+from datalad.tests.utils_pytest import assert_false
+from datalad.tests.utils_pytest import assert_true
+from datalad.tests.utils_pytest import chpwd
 from datalad.support.annexrepo import AnnexRepo
 
+import pytest
+
+
+@pytest.mark.parametrize("cls", [PhysicalFileStatusesDB, JsonFileStatusesDB])
 @with_tree(
     tree={'file1.txt': 'load1',
           '2git': 'load',
           'd': {
               'file2.txt': 'load2'
           }})
-def _test_AnnexDB(cls, path):
+def test_AnnexDB(path=None, *, cls):
     filepath1 = opj(path, 'file1.txt')
     filep2 = opj('d', 'file2.txt')
     filepath2 = opj(path, filep2)
@@ -126,9 +130,3 @@ def _test_AnnexDB(cls, path):
     # underlying repos do!
     db2.get(opj(realpath(path), '2git'))
     assert_equal(db2.get_obsolete(), [])
-
-
-def test_AnnexDBs():
-    for cls in (PhysicalFileStatusesDB,
-                JsonFileStatusesDB,):
-        yield _test_AnnexDB, cls

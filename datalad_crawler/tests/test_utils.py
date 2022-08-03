@@ -3,7 +3,7 @@ from ..utils import (
     get_func_kwargs_doc,
 )
 
-from datalad.tests.utils import assert_equal
+from datalad.tests.utils_pytest import assert_equal
 
 def test_flatten():
 
@@ -29,4 +29,4 @@ def test_flatten():
 def test_get_func_kwargs_doc():
     def some_func(arg1, kwarg1=None, kwarg2="bu"):
         return
-    assert_equal(get_func_kwargs_doc(some_func), ['arg1', 'kwarg1', 'kwarg2'])  
+    assert_equal(get_func_kwargs_doc(some_func), ['arg1', 'kwarg1', 'kwarg2'])

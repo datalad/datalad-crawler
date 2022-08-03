@@ -1,6 +1,6 @@
 .pybuild/
 /.idea
-.coverage
+.coverage*
 /venv*
 /cfgs
 /dist
@@ -12,7 +12,6 @@
 /.tox
 /repos
 tmp
-.noseids
 *.egg-info
 *.py[coe]
 *.bak

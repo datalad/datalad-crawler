@@ -41,7 +41,7 @@ from datalad.utils import (
     find_files,
     swallow_logs,
 )
-from datalad.tests.utils import (
+from datalad.tests.utils_pytest import (
     assert_in, assert_not_in,
     eq_, assert_not_equal, ok_, assert_raises,
     File,
@@ -155,7 +155,7 @@ def __test_basic_openfmri_top_pipeline():
 @skip_if_no_network
 @use_cassette('openfmri-1')
 @with_tempfile(mkdir=True)
-def __test_basic_openfmri_dataset_pipeline_with_annex(path):
+def __test_basic_openfmri_dataset_pipeline_with_annex(path=None):
     skip_if_no_module('scrapy')  # e.g. not present under Python3
     dataset_index = 1
     dataset_name = 'ds%06d' % dataset_index
@@ -219,7 +219,7 @@ _versioned_files = """
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-def test_openfmri_addperms(ind, topurl, outd, clonedir):
+def test_openfmri_addperms(ind=None, topurl=None, outd=None, clonedir=None):
     index_html = opj(ind, 'ds666', 'index.html')
 
     list(initiate_dataset(
@@ -269,7 +269,7 @@ def test_openfmri_addperms(ind, topurl, outd, clonedir):
 @skip_if('2.20.1' <= external_versions['cmd:system-git'] < '2.23.0',
          msg="Skip since system git is %s (underlying issue remains unresolved mystery)"
              % external_versions['cmd:system-git'])
-def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
+def test_openfmri_pipeline1(ind=None, topurl=None, outd=None, clonedir=None):
     index_html = opj(ind, 'ds666', 'index.html')
 
     list(initiate_dataset(
@@ -553,7 +553,7 @@ def test_openfmri_pipeline1(ind, topurl, outd, clonedir):
 )
 @serve_path_via_http
 @with_tempfile
-def test_openfmri_pipeline2(ind, topurl, outd):
+def test_openfmri_pipeline2(ind=None, topurl=None, outd=None):
     # no versioned files -- should still work! ;)
 
     list(initiate_dataset(
@@ -632,7 +632,7 @@ from ..openfmri_s3 import collection_pipeline, pipeline
 
 # TODO: RF to provide a generic/reusable test for this
 @with_tempfile(mkdir=True)
-def test_smoke_pipelines(d):
+def test_smoke_pipelines(d=None):
     # Just to verify that we can correctly establish the pipelines
     AnnexRepo(d, create=True)
     with chpwd(d):

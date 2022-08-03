@@ -181,7 +181,7 @@ def pipeline(dataset,
         return annex.add_archive_content(
             existing='archive-suffix',
             delete=True,
-            exclude=['(^|%s)\._' % os.path.sep],  # some files like '._whatever'
+            exclude=[r'(^|%s)\._' % os.path.sep],  # some files like '._whatever'
             **kw
         # overwrite=True,
         # TODO: we might need a safeguard for cases when multiple subdirectories within a single tarball
@@ -207,14 +207,14 @@ def pipeline(dataset,
             #    annex,
             # ],
             [  # and collect all URLs pointing to tarballs
-                a_href_match('.*/%s.*\.(tgz|tar.*|zip)' % prefix, min_count=1),
+                a_href_match(r'.*/%s.*\.(tgz|tar.*|zip)' % prefix, min_count=1),
                 # Since all content of openfmri is anyways available openly, no need atm
                 # to use https which complicates proxying etc. Thus replace for AWS urls
                 # to openfmri S3 from https to http
                 # TODO: might want to become an option for get_versioned_url?
                 sub({
                  'url': {
-                   '(http)s?(://.*openfmri\.s3\.amazonaws.com/|://s3\.amazonaws\.com/openfmri/)': r'\1\2'}}),
+                   r'(http)s?(://.*openfmri\.s3\.amazonaws.com/|://s3\.amazonaws\.com/openfmri/)': r'\1\2'}}),
                 func_to_node(get_versioned_url,
                              data_args=['url'],
                              outputs=['url'],
@@ -226,8 +226,8 @@ def pipeline(dataset,
             # Now some true magic -- possibly multiple commits, 1 per each detected **new** version!
             # this one doesn't go through all files, but only through the freshly staged!
             annex.commit_versions(
-                '_R(?P<version>\d+[\.\d]*)(?=[\._])',
-                always_versioned='ds\d\d+.*',
+                r'_R(?P<version>\d+[\.\d]*)(?=[\._])',
+                always_versioned=r'ds\d\d+.*',
                 unversioned='default',
                 default='1.0.0'),
         ],
@@ -248,13 +248,13 @@ def pipeline(dataset,
                                         # ds001.tar.gz  could then become ds0000001.zip
                                         fpath_subs=[
                                             # ad-hoc fixups for some datasets
-                                            ('ds005\.tgz', 'ds005_raw.tgz'),
+                                            (r'ds005\.tgz', 'ds005_raw.tgz'),
                                             # had it split into this one with derived data separately and then joined
-                                            ('ds007_01-20\.tgz', 'ds007_raw.tgz'),
-                                            ('ds000107_raw\.', 'ds000107.'),
+                                            (r'ds007_01-20\.tgz', 'ds007_raw.tgz'),
+                                            (r'ds000107_raw\.', 'ds000107.'),
                                             # generic
                                             ('^ds0*', '^ds'),
-                                            ('\.(zip|tgz|tar\.gz)$', '.ext')
+                                            (r'\.(zip|tgz|tar\.gz)$', '.ext')
                                         ],
                                         # Had manually to do this for this one since there was a switch from
                                         # overlay layout to even bigger single one within a minor 2.0.1 "release"
@@ -267,20 +267,20 @@ def pipeline(dataset,
             [   # Pipeline to augment content of the incoming and commit it to master
                 # There might be archives within archives, so we need to loop
                 {'loop': True},
-                find_files("\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),  #  we fail if none found -- there must be some! ;)),
+                find_files(r"\.(zip|tgz|tar(\..+)?)$", fail_if_none=True),  #  we fail if none found -- there must be some! ;)),
                 assign({'dataset_file': dataset + '///%(filename)s'}, interpolate=True),
                 switch(
                     'dataset_file',
                     {
-                        'ds0*158///aalmasks\.zip$': add_archive_content(add_archive_leading_dir=True),
-                        '.*///ds000030_R1\.0\.1_metadata\.tgz': add_archive_content(leading_dirs_depth=4),
+                        r'ds0*158///aalmasks\.zip$': add_archive_content(add_archive_leading_dir=True),
+                        r'.*///ds000030_R1\.0\.1_metadata\.tgz': add_archive_content(leading_dirs_depth=4),
                     },
                     default=add_archive_content(),
                     re=True,
                 ),
             ],
             [
-                find_files("(\.(tsv|csv|txt|json|gz|bval|bvec|hdr|img|m|mat|pdf|png|zip|nii|jpg|fif|fig)|README|CHANGES)$"),
+                find_files(r"(\.(tsv|csv|txt|json|gz|bval|bvec|hdr|img|m|mat|pdf|png|zip|nii|jpg|fif|fig)|README|CHANGES)$"),
                 fix_permissions(executable=False)
             ],
             annex.switch_branch('master'),

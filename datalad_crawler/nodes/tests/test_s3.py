@@ -22,13 +22,13 @@ from datalad.support.stats import ActivityStats
 from datalad.utils import swallow_logs
 from datalad.utils import rmtree
 
-from datalad.tests.utils import eq_
-from datalad.tests.utils import assert_not_equal
-from datalad.tests.utils import assert_in, assert_not_in
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import externals_use_cassette
-from datalad.tests.utils import with_tempfile
+from datalad.tests.utils_pytest import eq_
+from datalad.tests.utils_pytest import assert_not_equal
+from datalad.tests.utils_pytest import assert_in, assert_not_in
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import externals_use_cassette
+from datalad.tests.utils_pytest import with_tempfile
 
 
 def _annex(path):
@@ -46,7 +46,7 @@ target_version = '0.0.20151107'
 @skip_if_no_network
 @use_cassette('test_crawl_s3')
 @with_tempfile
-def test_crawl_s3(path):
+def test_crawl_s3(path=None):
     annex = _annex(path)
     # For now a very simple one which doesn't give a damn about files being removed
     # so we just get the "most recent existed" view of all of them without having commits
@@ -80,7 +80,7 @@ def test_crawl_s3(path):
 @skip_if_no_network
 @use_cassette('test_crawl_s3_commit_versions')
 @with_tempfile
-def test_crawl_s3_commit_versions(path):
+def test_crawl_s3_commit_versions(path=None):
     annex = _annex(path)
 
     # Fancier setup so we could do any of desired actions within a single sweep
@@ -127,7 +127,7 @@ def test_crawl_s3_commit_versions(path):
 @skip_if_no_network
 @use_cassette('test_crawl_s3_commit_versions_one_at_a_time')
 @with_tempfile
-def test_crawl_s3_commit_versions_one_at_a_time(path):
+def test_crawl_s3_commit_versions_one_at_a_time(path=None):
     annex = _annex(path)
 
     # Fancier setup so we could do any of desired actions within a single sweep
@@ -178,7 +178,7 @@ def test_crawl_s3_commit_versions_one_at_a_time(path):
 @skip_if_no_network
 @use_cassette('test_crawl_s3_file_to_directory')
 @with_tempfile
-def test_crawl_s3_file_to_directory(path):
+def test_crawl_s3_file_to_directory(path=None):
     annex = _annex(path)
 
     # with auto_finalize (default), Annexificator will finalize whenever it runs into a conflict

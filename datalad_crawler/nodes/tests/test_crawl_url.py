@@ -10,19 +10,18 @@
 
 from glob import glob
 from os.path import exists, join as opj
-from datalad.tests.utils import eq_, ok_
-from datalad.tests.utils import serve_path_via_http, with_tree
+from datalad.tests.utils_pytest import eq_, ok_
+from datalad.tests.utils_pytest import serve_path_via_http, with_tree
 
-from datalad.tests.utils import skip_if_scrapy_without_selector
+from datalad.tests.utils_pytest import skip_if_scrapy_without_selector
 skip_if_scrapy_without_selector()
 
 from ..crawl_url import crawl_url
 from ..crawl_url import parse_checksums
 from ..matches import a_href_match
 from ...pipeline import run_pipeline
-from datalad.tests.utils import assert_equal
-from datalad.tests.utils import assert_false
-from datalad.tests.utils import SkipTest
+from datalad.tests.utils_pytest import assert_equal
+from datalad.tests.utils_pytest import assert_false
 from datalad.utils import updated
 
 pages_loop = dict(
@@ -40,7 +39,7 @@ pages_loop = dict(
 
 @with_tree(**pages_loop)
 @serve_path_via_http()
-def test_recurse_loop_http(path, url):
+def test_recurse_loop_http(path=None, url=None):
     def visit(url, matchers):
         return sorted((d['url'].replace(url, '')
                        for d in crawl_url(url, matchers=matchers)()))

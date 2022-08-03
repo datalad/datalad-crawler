@@ -10,31 +10,33 @@
 from os import listdir
 from os.path import join as opj, exists, lexists, basename
 from collections import OrderedDict
-from datalad.tests.utils import with_tempfile, eq_, ok_, SkipTest
+from datalad.tests.utils_pytest import with_tempfile, eq_, ok_
 import logging
 from mock import patch
 
 from ..annex import initiate_dataset
 from ..annex import Annexificator
 from datalad.utils import swallow_logs
-from datalad.tests.utils import assert_equal, assert_in
-from datalad.tests.utils import assert_raises
-from datalad.tests.utils import assert_true, assert_false
-from datalad.tests.utils import with_tree, serve_path_via_http
-from datalad.tests.utils import ok_file_under_git
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import assert_cwd_unchanged
-from datalad.tests.utils import put_file_under_git
-from datalad.tests.utils import skip_if
+from datalad.tests.utils_pytest import assert_equal, assert_in
+from datalad.tests.utils_pytest import assert_raises
+from datalad.tests.utils_pytest import assert_true, assert_false
+from datalad.tests.utils_pytest import with_tree, serve_path_via_http
+from datalad.tests.utils_pytest import ok_file_under_git
+from datalad.tests.utils_pytest import ok_file_has_content
+from datalad.tests.utils_pytest import assert_cwd_unchanged
+from datalad.tests.utils_pytest import put_file_under_git
+from datalad.tests.utils_pytest import skip_if
 from ...pipeline import load_pipeline_from_config
 from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH, DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE
 from datalad.support.stats import ActivityStats
 from datalad.support.annexrepo import AnnexRepo
 from datalad.support.external_versions import external_versions
 
+import pytest
+
 
 @with_tempfile(mkdir=True)
-def test_annexificator_no_git_if_dirty(outdir):
+def test_annexificator_no_git_if_dirty(outdir=None):
 
     eq_(listdir(outdir), [])
 
@@ -52,7 +54,7 @@ def test_annexificator_no_git_if_dirty(outdir):
 
 @with_tempfile(mkdir=True)
 @with_tempfile()
-def test_initiate_dataset(path, path2):
+def test_initiate_dataset(path=None, path2=None):
     dataset_path = opj(path, 'test')
     datas = list(initiate_dataset('template', 'testdataset', path=dataset_path)())
     assert_equal(len(datas), 1)
@@ -75,11 +77,11 @@ def test_initiate_dataset(path, path2):
     annex3 = put_file_under_git(path2, 'test2.dat', content="test2", annexed=True)
     eq_(annex3.get_file_backend('test2.dat'), 'MD5E')
 
-    raise SkipTest("TODO much more")
+    pytest.skip("TODO much more")
 
 
 @with_tempfile(mkdir=True)
-def test_initiate_dataset_new_create_warns(path):
+def test_initiate_dataset_new_create_warns(path=None):
     try:
         from datalad.distribution import create
     except ImportError:
@@ -105,6 +107,7 @@ def test_initiate_dataset_new_create_warns(path):
 
 
 
+@pytest.mark.parametrize("mode", ('full', 'fast', 'relaxed',))
 @with_tree(tree=[
     ('d1', (
         ('1.dat', '1.dat load'),
@@ -112,7 +115,7 @@ def test_initiate_dataset_new_create_warns(path):
 ])
 @serve_path_via_http()
 @with_tempfile(mkdir=True)
-def _test_annex_file(mode, topdir, topurl, outdir):
+def test_annex_file(topdir=None, topurl=None, outdir=None, *, mode):
     annex = Annexificator(path=outdir, mode=mode,
                           statusdb='fileattr',
                           largefiles="exclude=*.txt")
@@ -197,15 +200,10 @@ def _test_annex_file(mode, topdir, topurl, outdir):
     assert_equal(output[0]['datalad_stats'], ActivityStats(files=1, add_git=1))
 
 
-def test_annex_file():
-    for mode in ('full', 'fast', 'relaxed',):
-        yield _test_annex_file, mode
-
-
 @assert_cwd_unchanged()  # we are passing annex, not chpwd
 @with_tree(tree={'1.tar': {'file.txt': 'load',
                            '1.dat': 'load2'}})
-def test_add_archive_content_tar(repo_path):
+def test_add_archive_content_tar(repo_path=None):
     mode = 'full'
     special_remotes = [DATALAD_SPECIAL_REMOTE, ARCHIVES_SPECIAL_REMOTE]
     annex = Annexificator(path=repo_path,
@@ -214,7 +212,7 @@ def test_add_archive_content_tar(repo_path):
                           special_remotes=special_remotes,
                           largefiles="exclude=*.txt and exclude=SOMEOTHER")
     output_add = list(annex({'filename': '1.tar'}))  # adding it to annex
-    assert_equal(output_add, [{'filename': '1.tar', 'filepath': opj(repo_path, '1.tar')}])
+    assert output_add == [{'filename': '1.tar', 'filepath': opj(repo_path, '1.tar')}]
 
     if external_versions['cmd:annex'] >= '6.20170208':
         # should have fixed remotes
@@ -246,7 +244,7 @@ def test_add_archive_content_tar(repo_path):
 @with_tempfile(mkdir=True)
 @with_tree(tree={'file': 'load'})
 @serve_path_via_http
-def test_add_dir_file(repo_path, p, topurl):
+def test_add_dir_file(repo_path=None, p=None, topurl=None):
     # test whenever file becomes a directory and then back a file.  Should all work!
     annex = Annexificator(path=repo_path, auto_finalize=False)
     url = "%s/file" % topurl
@@ -288,11 +286,11 @@ def test_add_dir_file(repo_path, p, topurl):
 
 
 def test_commit_versions():
-    raise SkipTest("TODO: is tested only as a part of test_openfmri.py")
+    pytest.skip("TODO: is tested only as a part of test_openfmri.py")
 
 
 @with_tempfile(mkdir=True)
-def test_remove_other_versions(repo_path):
+def test_remove_other_versions(repo_path=None):
     annex = Annexificator(path=repo_path, create=True)
 
     class version_db:
@@ -406,6 +404,6 @@ def test_remove_other_versions(repo_path):
     check('2.1.1', remaining={'a_1.0.0', 'b_2.0.0', 'c_2.0.1', 'c00_2.1.1'}, overlay=0)
     # but we should be able to specify to "unify" unversioned name more by providing
     # replacement pattern
-    kw = dict(fpath_subs=[('c00', 'c'), ('\.dat', '')])
+    kw = dict(fpath_subs=[('c00', 'c'), (r'\.dat', '')])
     check('2.1.1', remaining={'b_2.0.0', 'c00_2.1.1'}, overlay=1, **kw)
     check('2.1.1', remaining={'a_1.0.0', 'b_2.0.0', 'c00_2.1.1'}, overlay=0, **kw)

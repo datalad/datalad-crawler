@@ -8,17 +8,11 @@
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
 import inspect
-from nose import SkipTest
-from datalad.tests.utils import ok_, eq_, assert_raises
-from datalad.tests.utils import skip_if_scrapy_without_selector
+from datalad.tests.utils_pytest import ok_, eq_, assert_raises
+from datalad.tests.utils_pytest import skip_if_scrapy_without_selector
 skip_if_scrapy_without_selector()
 from ..matches import *
-
-try:
-    import scrapy
-except ImportError:
-    raise SkipTest("Needs scrapy")
-
+import pytest
 
 class sample1:
     # there could be some html normalization effects, so using " within for now
@@ -36,8 +30,12 @@ class sample1:
             <span>magic</span>
         </div>""" % a_htmls
 
-
-def _test_match_basic(matcher, query):
+@pytest.mark.parametrize("matcher,query", [
+    (xpath_match, '//a'),
+    (css_match, 'a'),
+    (a_href_match, '.*'),
+])
+def test_match_basic(matcher, query):
     extracts = dict(
         xpaths={'text': 'text()'},
         csss={'favorite': '.class1::text'}
@@ -68,12 +66,6 @@ def _test_match_basic(matcher, query):
     mg = m(dict(response=sample1.response))
     ok_(inspect.isgenerator(mg))
     assert_raises(ValueError, list, mg)
-
-
-def test_match_basic():
-    yield _test_match_basic, xpath_match, '//a'
-    yield _test_match_basic, css_match, 'a'
-    yield _test_match_basic, a_href_match, '.*'
 
 
 def test_a_href_match_basic():

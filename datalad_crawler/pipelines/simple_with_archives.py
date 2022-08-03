@@ -26,7 +26,7 @@ lgr = getLogger("datalad.crawler.pipelines.simple_with_archives")
 
 
 def pipeline(url=None,
-             a_href_match_='.*/download/.*\.(tgz|tar.*|zip|gz)',
+             a_href_match_=r'.*/download/.*\.(tgz|tar.*|zip|gz)',
              tarballs=True,
              datalad_downloader=False,
              use_current_dir=False,
@@ -34,7 +34,7 @@ def pipeline(url=None,
              rename=None,
              backend='MD5E',
              add_archive_leading_dir=False,
-             archives_re="\.(zip|tgz|tar(\..+)?)$",
+             archives_re=r"\.(zip|tgz|tar(\..+)?)$",
              annex=None,
              add_annex_to_incoming_pipeline=False,
              incoming_pipeline=None):

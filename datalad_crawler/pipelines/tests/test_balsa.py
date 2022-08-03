@@ -7,7 +7,7 @@
 #
 # ## ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
 
-from datalad_crawler.pipelines.tests.utils import _test_smoke_pipelines
+from datalad_crawler.pipelines.tests.test_utils import _test_smoke_pipelines
 from ..balsa import pipeline as ofpipeline, superdataset_pipeline
 import os
 import logging
@@ -31,24 +31,23 @@ from datalad.support.annexrepo import AnnexRepo
 from datalad.utils import chpwd
 from datalad.utils import find_files
 from datalad.utils import swallow_logs
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import SkipTest
-from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from datalad.tests.utils import assert_in, assert_not_in, assert_true
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils_pytest import assert_in, assert_not_in, assert_true
+from datalad.tests.utils_pytest import skip_if_no_module
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import serve_path_via_http
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import ok_file_has_content
+from datalad.tests.utils_pytest import ok_file_under_git
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
 
 
 def test_smoke_pipelines():
-    yield _test_smoke_pipelines, superdataset_pipeline, []
+    _test_smoke_pipelines(superdataset_pipeline, [])
 
 
 TEST_TREE1 = {
@@ -124,7 +123,7 @@ TEST_TREE1 = {
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-def test_balsa_extract_meta(ind, topurl, outd, clonedir):
+def test_balsa_extract_meta(ind=None, topurl=None, outd=None, clonedir=None):
     list(initiate_dataset(
         template="balsa",
         dataset_name='dataladtest-WG33',
@@ -197,7 +196,7 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-def test_balsa_pipeline1(ind, topurl, outd, clonedir):
+def test_balsa_pipeline1(ind=None, topurl=None, outd=None, clonedir=None):
     list(initiate_dataset(
         template="balsa",
         dataset_name='dataladtest-WG33',
@@ -314,7 +313,7 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 @serve_path_via_http
 @with_tempfile
 @with_tempfile
-def test_balsa_pipeline2(ind, topurl, outd, clonedir):
+def test_balsa_pipeline2(ind=None, topurl=None, outd=None, clonedir=None):
     list(initiate_dataset(
         template="balsa",
         dataset_name='dataladtest-WG33',

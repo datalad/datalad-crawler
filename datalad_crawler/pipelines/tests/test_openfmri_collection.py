@@ -19,16 +19,16 @@ from datalad.support.stats import ActivityStats
 from datalad.support.gitrepo import GitRepo
 
 from datalad.utils import chpwd
-from datalad.tests.utils import with_tree
-from datalad.tests.utils import eq_, assert_not_equal, ok_, assert_raises
-from datalad.tests.utils import assert_in, assert_not_in
-from datalad.tests.utils import skip_if_no_module
-from datalad.tests.utils import with_tempfile
-from datalad.tests.utils import serve_path_via_http
-from datalad.tests.utils import skip_if_no_network
-from datalad.tests.utils import use_cassette
-from datalad.tests.utils import ok_file_has_content
-from datalad.tests.utils import ok_file_under_git
+from datalad.tests.utils_pytest import with_tree
+from datalad.tests.utils_pytest import eq_, assert_not_equal, ok_, assert_raises
+from datalad.tests.utils_pytest import assert_in, assert_not_in
+from datalad.tests.utils_pytest import skip_if_no_module
+from datalad.tests.utils_pytest import with_tempfile
+from datalad.tests.utils_pytest import serve_path_via_http
+from datalad.tests.utils_pytest import skip_if_no_network
+from datalad.tests.utils_pytest import use_cassette
+from datalad.tests.utils_pytest import ok_file_has_content
+from datalad.tests.utils_pytest import ok_file_under_git
 from datalad.distribution.dataset import Dataset
 from datalad.distribution.dataset import Dataset
 from datalad_crawler.consts import CRAWLER_META_CONFIG_PATH
@@ -53,7 +53,7 @@ _PLUG_HERE = '<!-- PLUG HERE -->'
 )
 @serve_path_via_http
 @with_tempfile
-def test_openfmri_superdataset_pipeline1(ind, topurl, outd):
+def test_openfmri_superdataset_pipeline1(ind=None, topurl=None, outd=None):
 
     list(initiate_dataset(
         template="openfmri",

@@ -11,17 +11,18 @@ from datalad.support.annexrepo import AnnexRepo
 
 from datalad.utils import chpwd
 from datalad.utils import swallow_logs
-from datalad.tests.utils import ok_
 from datalad.utils import make_tempfile
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.tests')
 
 
+# This function needs to be in a file whose name starts with "test_" in order
+# for pytest to do assertion rewriting on it.
 def _test_smoke_pipelines(func, args, kwargs={}):
     with make_tempfile(mkdir=True) as tmpdir:
         AnnexRepo(tmpdir, create=True)
         with chpwd(tmpdir):
             with swallow_logs():
                 for p in [func(*args, **kwargs)]:
-                    ok_(len(p) > 1)
+                    assert len(p) > 1
