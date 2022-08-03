@@ -25,7 +25,7 @@ from six import iteritems
 from six import string_types
 from distutils.version import LooseVersion
 
-from datalad.version import __version__
+from datalad import __version__
 from datalad.api import add_archive_content
 from datalad.api import clean
 from datalad.utils import rmtree, updated
