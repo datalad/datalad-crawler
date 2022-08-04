@@ -38,7 +38,6 @@ with open(opj(dirname(__file__), 'README.md')) as fp:
 requires = {
     'core': [
         'datalad>=0.14.0',
-        'datalad_deprecated',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
     ],
     'devel-docs': [

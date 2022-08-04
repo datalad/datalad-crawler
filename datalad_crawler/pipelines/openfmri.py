@@ -11,6 +11,8 @@
 import os
 from os.path import lexists
 
+from datalad.downloaders.s3 import S3Authenticator
+
 # Import necessary nodes
 from ..nodes.crawl_url import crawl_url
 from ..nodes.matches import a_href_match
@@ -26,7 +28,6 @@ from datalad_crawler.consts import ARCHIVES_SPECIAL_REMOTE
 
 # For S3 crawling
 from .openfmri_s3 import pipeline as s3_pipeline
-from datalad.api import ls
 from datalad.dochelpers import exc_str
 
 # Possibly instantiate a logger if you would like to log
@@ -123,9 +124,9 @@ def pipeline(dataset,
         #     assert suf in 'AB'
         #     s3_prefix = 'ds017' + suf
 
-        openfmri_s3_prefix = 's3://openneuro/'
         try:
-            if not ls('%s%s' % (openfmri_s3_prefix, s3_prefix)):
+            bucket = S3Authenticator().authenticate("openneuro", None)
+            if not next(iter(bucket.list(s3_prefix, "/"))):
                 s3_prefix = None  # not there
         except Exception as exc:
             lgr.warning(
