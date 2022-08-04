@@ -16,32 +16,10 @@ Notes:
   it is
 """
 
-import os
-import re
 import json
-from os.path import lexists
-
-# Import necessary nodes
-from ..nodes.crawl_url import crawl_url
-from ..nodes.matches import css_match, a_href_match
 from ..nodes.misc import assign
-from ..nodes.misc import sub
-from ..nodes.misc import switch
-from ..nodes.misc import func_to_node
-from ..nodes.misc import find_files
-from ..nodes.misc import skip_if
-from ..nodes.misc import debug
-from ..nodes.misc import fix_permissions
 from ..nodes.annex import Annexificator
 from datalad.utils import updated
-from datalad.consts import ARCHIVES_SPECIAL_REMOTE, DATALAD_SPECIAL_REMOTE
-from datalad.downloaders.providers import Providers
-
-# For S3 crawling
-from ..nodes.s3 import crawl_s3
-from .openfmri_s3 import pipeline as s3_pipeline
-from datalad.api import ls
-from datalad.dochelpers import exc_str
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
@@ -51,8 +29,10 @@ lgr = getLogger("datalad.crawler.pipelines.xnat")
 from datalad.tests.utils_pytest import eq_
 from datalad.utils import assure_list, assure_bool
 
+
 def list_to_dict(l, field):
     return {r.pop(field): r for r in l}
+
 
 DEFAULT_RESULT_FIELDS = {'totalrecords', 'result'}
 PROJECT_ACCESS_TYPES = {'public', 'protected', 'private'}
@@ -144,7 +124,7 @@ class XNATServer(object):
 
     def get_projects(self, limit=None, drop_empty=True, asdict=True):
         """Get list of projects 
-        
+
         Parameters
         ----------
         limit: {'public', 'protected', 'private', None} or list of thereof
