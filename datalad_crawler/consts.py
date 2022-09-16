@@ -11,9 +11,11 @@
 
 from os.path import join
 
-from datalad.consts import HANDLE_META_DIR
+from datalad.consts import DATALAD_DOTDIR
 from datalad.consts import ARCHIVES_SPECIAL_REMOTE
 from datalad.consts import DATALAD_SPECIAL_REMOTE
+
+HANDLE_META_DIR = DATALAD_DOTDIR
 
 # directory containing prepared metadata of a dataset repository:
 CRAWLER_META_DIR = join(HANDLE_META_DIR, 'crawl')
