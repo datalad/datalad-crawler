@@ -1,3 +1,18 @@
+# 0.9.6 (Fri Sep 16 2022)
+
+#### 🏠 Internal
+
+- Move definition of `HANDLE_META_DIR` into cralwer [#125](https://github.com/datalad/datalad-crawler/pull/125) ([@christian-monch](https://github.com/christian-monch))
+- RF: remove datalad_deprecated dependency [#119](https://github.com/datalad/datalad-crawler/pull/119) ([@yarikoptic](https://github.com/yarikoptic))
+- BF: import __version__ straight from datalad. not deprecated datalad.version [#120](https://github.com/datalad/datalad-crawler/pull/120) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 2
+
+- Christian Mönch ([@christian-monch](https://github.com/christian-monch))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.5 (Wed Aug 03 2022)
 
 #### 🐛 Bug Fix
