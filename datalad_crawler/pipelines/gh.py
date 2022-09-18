@@ -154,8 +154,14 @@ def pipeline(org=None,
                 'dataset_url': repo.clone_url,
             }
 
-
     def do_aggregate_metadata(data):
+        if not hasattr(data['superdataset'], 'aggregate_metadata'):
+            lgr.warning(
+                "Cannot call `aggregate_metadata`. If you intend metadata "
+                "aggregation, please install the `datalad-deprecated`-"
+                "extension, or `datalad-metalad < 0.3.0`."
+            )
+            return
         # For now just aggregate into superdataset, and assume it is always provided!
         agg_out = data['superdataset'].aggregate_metadata(
             data['dataset_path'],
