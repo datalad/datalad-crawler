@@ -1,3 +1,19 @@
+# 0.9.7 (Mon Oct 24 2022)
+
+#### 🏠 Internal
+
+- Guard usage of the legacy method  `meta_aggregate`, add datalad-deprecated into tests dependencies [#126](https://github.com/datalad/datalad-crawler/pull/126) ([@christian-monch](https://github.com/christian-monch) [@yarikoptic](https://github.com/yarikoptic))
+- Update GitHub Actions action versions [#128](https://github.com/datalad/datalad-crawler/pull/128) ([@jwodder](https://github.com/jwodder))
+- Set action step outputs via $GITHUB_OUTPUT [#127](https://github.com/datalad/datalad-crawler/pull/127) ([@jwodder](https://github.com/jwodder))
+
+#### Authors: 3
+
+- Christian Mönch ([@christian-monch](https://github.com/christian-monch))
+- John T. Wodder II ([@jwodder](https://github.com/jwodder))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.6 (Fri Sep 16 2022)
 
 #### 🏠 Internal
