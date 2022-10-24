@@ -1339,8 +1339,16 @@ class Annexificator(object):
                 lgr.info("Found branch non-dirty -- nothing was committed")
 
             if aggregate:
-                from datalad.api import aggregate_metadata
-                aggregate_metadata(
+                import datalad.api
+                if not hasattr(datalad.api, 'aggregate_metadata'):
+                    lgr.warning(
+                        "Cannot import `aggregate_metadata` from datalad.api, "
+                        "if you intend metadata aggregation, please install "
+                        "the `datalad-deprecated`-extension or "
+                        "`datalad-metalad < 0.3.0`."
+                    )
+                    return
+                datalad.api.aggregate_metadata(
                     dataset='^',
                     path=self.repo.path,
                     update_mode='all',
