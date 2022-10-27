@@ -47,7 +47,7 @@ requires = {
     ],
     'tests': [
         'datalad>=0.17.0',
-        'datalad-deprecated',
+        'datalad-deprecated>=0.2.6',
         'pytest>=7.0',
         'pytest-cov',
         'mock',

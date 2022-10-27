@@ -400,13 +400,13 @@ def test_openfmri_pipeline1(ind=None, topurl=None, outd=None, clonedir=None):
 
     try:
         # this is the new way
-        from datalad.metadata.metadata import get_ds_aggregate_db_locations
+        from datalad_deprecated.metadata.metadata import get_ds_aggregate_db_locations
         ds = Dataset('.')
         dbloc, objbase = get_ds_aggregate_db_locations(ds)
         dbloc = op.relpath(dbloc, start=ds.path)
     except ImportError:
         # this stopped working in early 2019 versions of datalad
-        from datalad.metadata.metadata import agginfo_relpath
+        from datalad_deprecated.metadata.metadata import agginfo_relpath
         dbloc = agginfo_relpath
 
     target_files = {
