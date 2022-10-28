@@ -1,3 +1,15 @@
+# 0.9.8 (Fri Oct 28 2022)
+
+#### 🐛 Bug Fix
+
+- Fix metadata import and dependency on datalad-deprecated [#129](https://github.com/datalad/datalad-crawler/pull/129) ([@bpoldrack](https://github.com/bpoldrack))
+
+#### Authors: 1
+
+- Benjamin Poldrack ([@bpoldrack](https://github.com/bpoldrack))
+
+---
+
 # 0.9.7 (Mon Oct 24 2022)
 
 #### 🏠 Internal
