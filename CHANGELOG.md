@@ -1,3 +1,15 @@
+# 0.9.9 (Mon Oct 31 2022)
+
+#### 🏠 Internal
+
+- Re-release due to PyPi maintenance [#130](https://github.com/datalad/datalad-crawler/pull/130) ([@bpoldrack](https://github.com/bpoldrack))
+
+#### Authors: 1
+
+- Benjamin Poldrack ([@bpoldrack](https://github.com/bpoldrack))
+
+---
+
 # 0.9.8 (Fri Oct 28 2022)
 
 #### 🐛 Bug Fix
