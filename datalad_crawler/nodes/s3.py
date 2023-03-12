@@ -266,7 +266,7 @@ class crawl_s3(object):
                         yield updated(data, {'filename': filename, 'datalad_action': 'remove'})
                     else:
                         # Situation there is much trickier since it seems that "directory"
-                        # could also be a key itself and created/removed which somewhat interfers with
+                        # could also be a key itself and created/removed which somewhat interferes with
                         # all our logic here
                         # For an interesting example see
                         #  s3://openneuro/ds000217/ds000217_R1.0.0/compressed

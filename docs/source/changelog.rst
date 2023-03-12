@@ -131,7 +131,7 @@ Primarily a variety of fixes
 -  tests
 
    -  variety of tests lost their ``@known_failure_v6`` and now
-      tollerant to upcoming datalad 0.11.2
+      tolerant to upcoming datalad 0.11.2
 
 0.2 (May 17, 2018) – The other Release
 --------------------------------------

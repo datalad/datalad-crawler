@@ -270,7 +270,7 @@ Primarily a variety of fixes
 - new `stanford_lib` pipeline
 - aggregation of metadata explicitly invokes incremental mode
 - tests
-  - variety of tests lost their `@known_failure_v6` and now tollerant
+  - variety of tests lost their `@known_failure_v6` and now tolerant
     to upcoming datalad 0.11.2
 
 # 0.2 (May 17, 2018) -- The other Release
