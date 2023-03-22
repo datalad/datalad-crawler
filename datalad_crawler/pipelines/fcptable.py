@@ -141,7 +141,7 @@ def pipeline(dataset):
                 switch(
                     'url',
                     {
-                        # e.g. for Cleveland CCF -- we need to crawl one of thos pages
+                        # e.g. for Cleveland CCF -- we need to crawl one of those pages
                         '(http://fcon_1000.projects.nitrc.org/indi/'
                         # or it might lead to the nitrc project page
                         '|http://www.nitrc.org/projects/'

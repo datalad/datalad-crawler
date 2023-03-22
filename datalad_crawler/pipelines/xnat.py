@@ -134,7 +134,7 @@ class XNATServer(object):
         drop_empty: bool
           whether to drop projects with no experiments.  Implies
           limit = 'public' since we need access to projects to determine if they
-          are empty.  If drop_empty is set nd limit is None, limit is set to
+          are empty.  If drop_empty is set and limit is None, limit is set to
           'public'
         """
 

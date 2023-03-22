@@ -56,9 +56,9 @@ def test_annexificator_no_git_if_dirty(outdir=None):
 @with_tempfile()
 def test_initiate_dataset(path=None, path2=None):
     dataset_path = opj(path, 'test')
-    datas = list(initiate_dataset('template', 'testdataset', path=dataset_path)())
-    assert_equal(len(datas), 1)
-    data = datas[0]
+    data = list(initiate_dataset('template', 'testdataset', path=dataset_path)())
+    assert_equal(len(data), 1)
+    data = data[0]
     eq_(data['dataset_path'], dataset_path)
     crawl_cfg = opj(dataset_path, CRAWLER_META_CONFIG_PATH)
     ok_(exists, crawl_cfg)

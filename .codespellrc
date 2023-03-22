@@ -1,0 +1,4 @@
+[codespell]
+skip = .git,*.pdf,*.svg,venvs,vcr_cassettes,build,test*.yaml
+# bu - used in tests, ignore for now
+ignore-words-list = bu
