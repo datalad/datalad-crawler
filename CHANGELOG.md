@@ -1,3 +1,15 @@
+# 1.0.1 (Thu May 25 2023)
+
+#### 🏠 Internal
+
+- Swtich release action from EOLed 3.6 (lead to failed release upload to pypi) to 3.11 [#135](https://github.com/datalad/datalad-crawler/pull/135) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 1
+
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 1.0.0 (Thu May 25 2023)
 
 #### 💥 Breaking Change
