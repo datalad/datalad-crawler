@@ -25,10 +25,6 @@ env:
     # Special settings/helper for combined coverage from special remotes execution
     - COVERAGE=coverage
     - DATALAD_DATASETS_TOPURL=http://datasets-tests.datalad.org
-  matrix:
-    - DATALAD_REPO_VERSION=8
-    - DATALAD_REPO_VERSION=
-
 
 before_install:
   # Just in case we need to check if nfs is there etc
