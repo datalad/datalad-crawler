@@ -1,6 +1,7 @@
 # vim ft=yaml
 # travis-ci.org definition for DataLad build
 language: python
+dist: focal
 
 python:
   - 3.7
