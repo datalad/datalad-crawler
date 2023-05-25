@@ -1,3 +1,24 @@
+# 1.0.0 (Thu May 25 2023)
+
+#### 💥 Breaking Change
+
+- [gh-actions](deps): Bump codespell-project/actions-codespell from 1 to 2 [#133](https://github.com/datalad/datalad-crawler/pull/133) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### 🐛 Bug Fix
+
+- codespell: config, workflow + fixes [#131](https://github.com/datalad/datalad-crawler/pull/131) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🧪 Tests
+
+- Add Python 3.10 and 3.11 into travis CI testing, switch Travis env to newer focal, and drop testing across different annex repo versions [#134](https://github.com/datalad/datalad-crawler/pull/134) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 0.9.9 (Mon Oct 31 2022)
 
 #### 🏠 Internal
