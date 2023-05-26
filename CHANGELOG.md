@@ -1,3 +1,16 @@
+# 1.0.2 (Fri May 26 2023)
+
+#### 🐛 Bug Fix
+
+- Minimal surgery to get github organisations crawling working again [#136](https://github.com/datalad/datalad-crawler/pull/136) ([@yarikoptic](https://github.com/yarikoptic))
+- [DATALAD RUNCMD] fix typo in changelog [#136](https://github.com/datalad/datalad-crawler/pull/136) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### Authors: 1
+
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 1.0.1 (Thu May 25 2023)
 
 #### 🏠 Internal
