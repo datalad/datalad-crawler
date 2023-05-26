@@ -17,6 +17,7 @@ import re
 from datalad import cfg
 
 from datalad.api import Dataset, install
+from datalad.downloaders.credentials import Token
 from datalad.support import path as op
 from datalad.support.gitrepo import GitRepo
 from datalad.utils import (
@@ -31,6 +32,19 @@ from datalad.downloaders.credentials import UserPassword
 # during pipeline creation
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.github")
+
+
+def _get_github_token(obtain=False) -> str:
+    # Quick and dirty adapter which would use stored Token if was stored in credentials
+    # or just access in cfg if present
+    try:
+        token = Token('api.github.com')()['token']
+        if not token:
+            raise ValueError("Empty value for token is stored")
+        return token
+    except Exception as exc:
+        lgr.warning("Failed to get api.github.com credential: %s", exc)
+    return (cfg.obtain if obtain else cfg.get)('hub.oauthtoken')
 
 
 def pipeline(org=None,
@@ -82,7 +96,7 @@ def pipeline(org=None,
         assert list(data) == ['datalad_stats'], data
 
         # TODO: redo with proper integration
-        g = gh.Github(cfg.obtain('hub.oauthtoken'))
+        g = gh.Github(_get_github_token(obtain=True))
         entity = g.get_organization(org)
         all_repos = list(entity.get_repos(repo_type))
 

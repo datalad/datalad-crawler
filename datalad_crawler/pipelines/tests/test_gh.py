@@ -19,14 +19,15 @@ from datalad.tests.utils_pytest import (
 )
 import pytest
 
+from ..gh import _get_github_token
 
 @skip_if_no_network
 @with_tempfile
 def test_crawl(tempd=None):
     if not github:
         pytest.skip("no github package")
-    # ATM tests completely overload HOME so TODO: do make it use credentials system
-    if not cfg.get('hub.oauthtoken'):
+    # set DATALAD_TESTS_CREDENTIALS=system to use system credentials
+    if not _get_github_token(obtain=False):
         pytest.skip("no github credentials")
     ds = create(tempd)
     with chpwd(tempd):
