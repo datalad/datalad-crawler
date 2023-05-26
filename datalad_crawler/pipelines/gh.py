@@ -14,7 +14,10 @@
 
 import re
 
+from datalad import cfg
+
 from datalad.api import Dataset, install
+from datalad.downloaders.credentials import Token
 from datalad.support import path as op
 from datalad.support.gitrepo import GitRepo
 from datalad.utils import (
@@ -29,6 +32,19 @@ from datalad.downloaders.credentials import UserPassword
 # during pipeline creation
 from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.github")
+
+
+def _get_github_token(obtain=False) -> str:
+    # Quick and dirty adapter which would use stored Token if was stored in credentials
+    # or just access in cfg if present
+    try:
+        token = Token('api.github.com')()['token']
+        if not token:
+            raise ValueError("Empty value for token is stored")
+        return token
+    except Exception as exc:
+        lgr.warning("Failed to get api.github.com credential: %s", exc)
+    return (cfg.obtain if obtain else cfg.get)('hub.oauthtoken')
 
 
 def pipeline(org=None,
@@ -71,8 +87,6 @@ def pipeline(org=None,
     drop_data = assure_bool(drop_data)
 
     import github as gh
-    # TODO: consider elevating that function to a "public" helper
-    from datalad.support.github_ import _gen_github_entity
     superds = Dataset('.')
     if metadata_nativetypes:
         metadata_nativetypes = assure_list_from_str(metadata_nativetypes, sep=',')
@@ -80,10 +94,10 @@ def pipeline(org=None,
     aggregate_later = []
     def crawl_github_org(data):
         assert list(data) == ['datalad_stats'], data
-        # TODO: actually populate the datalad_stats with # of datasets and
-        # possibly amount of data downloaded in get below
-        # Needs DataLad >= 0.13.6~7^2~3 where password was removed
-        entity, cred = next(_gen_github_entity(None, org))
+
+        # TODO: redo with proper integration
+        g = gh.Github(_get_github_token(obtain=True))
+        entity = g.get_organization(org)
         all_repos = list(entity.get_repos(repo_type))
 
         for repo in all_repos:
@@ -105,6 +119,14 @@ def pipeline(org=None,
                 # although we could just do install, which would at least
                 # verify that url is the same... to not try to aggregate
                 # etc, we will just skip for now
+                continue
+
+            # See if it has anything committed - we will not clone empty ones
+            try:
+                if not any(repo.get_commits()):
+                    raise ValueError("no commits")
+            except Exception as exc:
+                lgr.info("Skipping %s since: %s", name, exc)
                 continue
 
             # TODO: all the recursive etc options
