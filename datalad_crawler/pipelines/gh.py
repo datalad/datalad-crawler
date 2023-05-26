@@ -121,6 +121,14 @@ def pipeline(org=None,
                 # etc, we will just skip for now
                 continue
 
+            # See if it has anything committed - we will not clone empty ones
+            try:
+                if not any(repo.get_commits()):
+                    raise ValueError("no commits")
+            except Exception as exc:
+                lgr.info("Skipping %s since: %s", name, exc)
+                continue
+
             # TODO: all the recursive etc options
             try:
                 ds = superds.install(
