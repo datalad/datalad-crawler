@@ -14,6 +14,8 @@
 
 import re
 
+from datalad import cfg
+
 from datalad.api import Dataset, install
 from datalad.support import path as op
 from datalad.support.gitrepo import GitRepo
@@ -71,8 +73,6 @@ def pipeline(org=None,
     drop_data = assure_bool(drop_data)
 
     import github as gh
-    # TODO: consider elevating that function to a "public" helper
-    from datalad.support.github_ import _gen_github_entity
     superds = Dataset('.')
     if metadata_nativetypes:
         metadata_nativetypes = assure_list_from_str(metadata_nativetypes, sep=',')
@@ -80,10 +80,10 @@ def pipeline(org=None,
     aggregate_later = []
     def crawl_github_org(data):
         assert list(data) == ['datalad_stats'], data
-        # TODO: actually populate the datalad_stats with # of datasets and
-        # possibly amount of data downloaded in get below
-        # Needs DataLad >= 0.13.6~7^2~3 where password was removed
-        entity, cred = next(_gen_github_entity(None, org))
+
+        # TODO: redo with proper integration
+        g = gh.Github(cfg.obtain('hub.oauthtoken'))
+        entity = g.get_organization(org)
         all_repos = list(entity.get_repos(repo_type))
 
         for repo in all_repos:
