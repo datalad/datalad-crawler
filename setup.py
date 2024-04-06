@@ -39,6 +39,7 @@ requires = {
     'core': [
         'datalad>=0.14.0',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
+        'boto',  # used directly by datalad_crawler/nodes/s3.py
     ],
     'devel-docs': [
         # Documentation
