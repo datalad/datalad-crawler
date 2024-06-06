@@ -18,15 +18,38 @@ import time
 
 from datalad.utils import updated
 from datalad.dochelpers import exc_str
-from datalad.support.s3 import get_key_url
 from datalad.support.network import iso8601_to_epoch
 from datalad.downloaders.providers import Providers
 from datalad.downloaders.s3 import S3Downloader
 from datalad.support.exceptions import TargetFileAbsent
+from datalad.support.network import urlquote
 from ..dbs.versions import SingleVersionDB
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.s3')
+
+
+def get_key_url(e, schema='http', versioned=True):
+    """Generate an s3:// or http:// url given a key
+    if versioned url is requested but version_id is None, no versionId suffix
+    will be added
+    """
+	# Copied from datalad.support.s3, which is removing support for boto
+	#
+    # TODO: here we would need to encode the name since urlquote actually
+    # can't do that on its own... but then we should get a copy of the thing
+    # so we could still do the .format....
+    # ... = e.name.encode('utf-8')  # unicode isn't advised in URLs
+    e.name_urlquoted = urlquote(e.name)
+    if schema == 'http':
+        fmt = "http://{e.bucket.name}.s3.amazonaws.com/{e.name_urlquoted}"
+    elif schema == 's3':
+        fmt = "s3://{e.bucket.name}/{e.name_urlquoted}"
+    else:
+        raise ValueError(schema)
+    if versioned and e.version_id is not None:
+        fmt += "?versionId={e.version_id}"
+    return fmt.format(e=e)
 
 
 def get_version_for_key(k, fmt='0.0.%Y%m%d'):
