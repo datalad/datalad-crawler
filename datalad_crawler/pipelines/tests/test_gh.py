@@ -36,7 +36,7 @@ def test_crawl(tempd=None):
             args={'org': 'datalad-collection-1', 'include': 'kaggle'}
         )
         crawl()
-    subdss = ds.subdatasets(fulfilled=True, result_xfm='datasets')
+    subdss = ds.subdatasets(state='present', result_xfm='datasets')
     assert all('kaggle' in d.path for d in subdss)
     assert_greater(len(subdss), 1)
     assert_false(ds.repo.dirty)

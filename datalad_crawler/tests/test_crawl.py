@@ -12,8 +12,8 @@
 
 __docformat__ = 'restructuredtext'
 
-from mock import patch
-from mock import call
+from unittest.mock import patch
+from unittest.mock import call
 
 from datalad.support.external_versions import external_versions
 

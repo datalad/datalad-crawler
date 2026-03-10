@@ -10,7 +10,6 @@
 
 # Import necessary nodes
 import os
-from six import text_type
 from datalad.utils import auto_repr
 from datalad.utils import _path_
 from datalad.utils import updated
@@ -72,7 +71,7 @@ def get_metadata(dataset=None):
     records_with_empty_xmls = {}
     for i, json_ in enumerate(rj['data']):
         json_xml = json_['attributes']['xml']
-        if isinstance(json_xml, text_type):
+        if isinstance(json_xml, str):
             json_xml = json_xml.encode()
 
         if not json_xml:

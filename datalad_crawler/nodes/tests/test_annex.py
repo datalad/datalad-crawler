@@ -12,7 +12,7 @@ from os.path import join as opj, exists, lexists, basename
 from collections import OrderedDict
 from datalad.tests.utils_pytest import with_tempfile, eq_, ok_
 import logging
-from mock import patch
+from unittest.mock import patch
 
 from ..annex import initiate_dataset
 from ..annex import Annexificator

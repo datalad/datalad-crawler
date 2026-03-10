@@ -12,7 +12,7 @@ from glob import glob
 import os.path as op
 from os.path import join as opj
 from os.path import exists
-from mock import patch
+from unittest.mock import patch
 
 from ...nodes.crawl_url import crawl_url
 from ...nodes.matches import *

@@ -12,7 +12,6 @@ from stat import *
 from os import chmod
 from os.path import join as opj
 from datalad.tests.utils_pytest import with_tempfile, eq_, ok_, assert_raises
-from six import next
 from collections import OrderedDict
 
 from ..misc import get_disposition_filename
@@ -47,7 +46,7 @@ from datalad.tests.utils_pytest import swallow_logs
 
 import logging
 
-from mock import patch
+from unittest.mock import patch
 
 import pytest
 

@@ -38,6 +38,7 @@ with open(opj(dirname(__file__), 'README.md')) as fp:
 requires = {
     'core': [
         'datalad>=0.14.0',
+        'looseversion',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
         'boto',  # used directly by datalad_crawler/nodes/s3.py
     ],
@@ -51,7 +52,6 @@ requires = {
         'datalad-deprecated>=0.2.6',
         'pytest>=7.0',
         'pytest-cov',
-        'mock',
     ],
 }
 requires['devel'] = sum(list(requires.values()), [])

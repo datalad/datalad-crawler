@@ -70,7 +70,7 @@ def test_openfmri_superdataset_pipeline1(ind=None, topurl=None, outd=None):
 
     # TODO: replace below command with the one listing subdatasets
     subdatasets = ['ds000001', 'ds000002']
-    eq_(Dataset(outd).subdatasets(fulfilled=True, result_xfm='relpaths'),
+    eq_(Dataset(outd).subdatasets(state='present', result_xfm='relpaths'),
         subdatasets)
 
     # Check that crawling configuration was created for every one of those

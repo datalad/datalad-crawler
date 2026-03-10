@@ -27,7 +27,7 @@ from logging import getLogger
 lgr = getLogger("datalad.crawler.pipelines.xnat")
 
 from datalad.tests.utils_pytest import eq_
-from datalad.utils import assure_list, assure_bool
+from datalad.utils import ensure_list, ensure_bool
 
 
 def list_to_dict(l, field):
@@ -138,7 +138,7 @@ class XNATServer(object):
           'public'
         """
 
-        limit = assure_list(limit)
+        limit = ensure_list(limit)
 
         if drop_empty:
             # TODO: rework this logic/restriction
@@ -286,8 +286,8 @@ def superdataset_pipeline(url, limit=None, drop_empty=True):
 
     annex = Annexificator(no_annex=True, allow_dirty=False)
     lgr.info("Creating a pipeline with url=%s limit=%s drop_empty=%s", url, limit, drop_empty)
-    limit = assure_list(limit)
-    drop_empty = assure_bool(drop_empty)
+    limit = ensure_list(limit)
+    drop_empty = ensure_bool(drop_empty)
 
     def get_projects(data):
         xnat = XNATServer(url)
@@ -318,7 +318,7 @@ def superdataset_pipeline(url, limit=None, drop_empty=True):
 
 def pipeline(url, project, project_access='public', subjects=None):
     # TODO: Ben: Clarify parameters. In particular `project_access` is unclear to me
-    subjects = assure_list(subjects)
+    subjects = ensure_list(subjects)
 
     xnat = XNATServer(url)
 

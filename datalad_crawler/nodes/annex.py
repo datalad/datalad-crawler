@@ -21,9 +21,7 @@ from os.path import isdir
 from os.path import relpath
 from os import unlink
 from humanize import naturalsize
-from six import iteritems
-from six import string_types
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from datalad import __version__
 from datalad.api import add_archive_content
@@ -33,7 +31,7 @@ from datalad.utils import lmtime
 from datalad.utils import find_files
 from datalad.utils import auto_repr
 from datalad.utils import try_multiple
-from datalad.utils import assure_list
+from datalad.utils import ensure_list
 
 from datalad.downloaders.providers import Providers
 from datalad.api import (
@@ -323,7 +321,7 @@ class Annexificator(object):
                         init_datalad_remote(self.repo, remote, autoenable=True)
 
         self.mode = mode
-        self.options = assure_list(options, copy=True)
+        self.options = ensure_list(options, copy=True)
         self.auto_finalize = auto_finalize
         self._states = set()
         # TODO: may be should be a lazy centralized instance?
@@ -430,7 +428,7 @@ class Annexificator(object):
                                       })
 
         if self.statusdb is not None and self._statusdb is None:
-            if isinstance(self.statusdb, string_types):
+            if isinstance(self.statusdb, str):
                 # initiate the DB
                 self._statusdb = {
                     'json': JsonFileStatusesDB,
@@ -1048,7 +1046,7 @@ class Annexificator(object):
 
             # unstage all versioned files from the index
             nunstaged = 0
-            for version, fpaths in iteritems(versions):
+            for version, fpaths in versions.items():
                 nfpaths = len(fpaths)
                 lgr.debug("Unstaging %d files for version %s", nfpaths, version)
                 nunstaged += nfpaths
@@ -1057,12 +1055,12 @@ class Annexificator(object):
             stats = data.get('datalad_stats', None)
             stats_str = ('\n\n' + stats.as_str(mode='full')) if stats else ''
 
-            for iversion, (version, fpaths) in enumerate(iteritems(new_versions)):  # for all versions past previous
+            for iversion, (version, fpaths) in enumerate(new_versions.items()):  # for all versions past previous
                 # stage/add files of that version to index
                 if rename:
                     # we need to rename and create a new vfpaths
                     vfpaths = []
-                    for fpath, vfpath in iteritems(fpaths):
+                    for fpath, vfpath in fpaths.items():
                         # ATM we do not allow unversioned -- should have failed earlier, if not HERE!
                         # assert(not lexists(fpath))
                         # nope!  it must be there from previous commit of a versioned file!
@@ -1167,7 +1165,7 @@ class Annexificator(object):
             current_overlay_version = overlay_version_func(current_version)
             prev_version = None
             tracked_files = {}  # track files in case of overlaying
-            for version, fpaths in iteritems(versions_db.versions):
+            for version, fpaths in versions_db.versions.items():
                 # sanity check since we now will have assumption that versions
                 # are sorted
                 if prev_version is not None:
@@ -1347,19 +1345,19 @@ class Annexificator(object):
                         "the `datalad-deprecated`-extension or "
                         "`datalad-metalad < 0.3.0`."
                     )
-                    return
-                datalad.api.aggregate_metadata(
-                    dataset='^',
-                    path=self.repo.path,
-                    update_mode='all',
-                    incremental=True)
+                else:
+                    datalad.api.aggregate_metadata(
+                        dataset='^',
+                        path=self.repo.path,
+                        update_mode='all',
+                        incremental=True)
 
             if tag and stats:
                 # versions survive only in total_stats
                 total_stats = stats.get_total()
                 if total_stats.versions:
                     last_version = total_stats.versions[-1]
-                    if isinstance(tag, string_types):
+                    if isinstance(tag, str):
                         tag_ = tag.format(stats=total_stats, data=data, last_version=last_version)
                     else:
                         tag_ = last_version

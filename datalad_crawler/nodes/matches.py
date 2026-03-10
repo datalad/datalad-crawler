@@ -13,7 +13,6 @@ __docformat__ = 'restructuredtext'
 import re
 import types
 
-from six import PY3
 
 from datalad.utils import updated
 from datalad.support.network import dlurljoin
@@ -121,7 +120,7 @@ class ScrapyExtractorMatch(ExtractorMatch):
         # there must be some magic happening since originally
         # (when just parsing the code) those are unbound (func)
         # and then somehow become bound
-        if PY3 and isinstance(self.EXTRACTOR, types.MethodType):
+        if isinstance(self.EXTRACTOR, types.MethodType):
             self.EXTRACTOR = self.EXTRACTOR.__func__
         for extracted in self.EXTRACTOR(selector, query):
             yield extracted, data
