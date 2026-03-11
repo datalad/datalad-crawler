@@ -40,7 +40,7 @@ requires = {
         'datalad>=0.14.0',
         'looseversion',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
-        'boto',  # used directly by datalad_crawler/nodes/s3.py
+        'boto; python_version<"3.12"',  # broken on 3.12+ (vendored six); used by nodes/s3.py
     ],
     'devel-docs': [
         # Documentation

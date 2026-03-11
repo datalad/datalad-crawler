@@ -10,11 +10,14 @@
 """
 
 import re
-
-from boto.s3.key import Key
-from boto.s3.prefix import Prefix
-from boto.s3.deletemarker import DeleteMarker
 import time
+
+try:
+    from boto.s3.key import Key
+    from boto.s3.prefix import Prefix
+    from boto.s3.deletemarker import DeleteMarker
+except ImportError:
+    Key = Prefix = DeleteMarker = None
 
 from datalad.utils import updated
 from datalad.dochelpers import exc_str
@@ -135,6 +138,11 @@ class crawl_s3(object):
         self.exclude = exclude
 
     def __call__(self, data):
+        if Key is None:
+            raise ImportError(
+                "boto package is required for S3 crawling but could not be "
+                "imported. Install boto or use Python < 3.12."
+            )
 
         stats = data.get('datalad_stats', None)
         url = "s3://%s" % self.bucket
