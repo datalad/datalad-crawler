@@ -15,7 +15,6 @@ __docformat__ = 'restructuredtext'
 from unittest.mock import patch
 from unittest.mock import call
 
-from datalad.support.external_versions import external_versions
 
 from datalad.api import crawl
 
@@ -78,8 +77,6 @@ def test_crawl_api_recursive(get_subdatasets_=None, run_pipeline_=None, load_pip
     with chpwd(tdir):
         output, stats = crawl(recursive=True)
     assert_equal(pwd, getpwd())
-    if external_versions['mock'] < '1.0.1':
-        pytest.mark("needs a more recent mock which throws exceptions in side_effects")
     assert_equal(output, [[]]*4 + [None])  # for now output is just a list of outputs
     assert_equal(stats, ActivityStats(datasets_crawled=5, datasets_crawl_failed=1))  # nothing was done but we got it crawled
     chpwd_.assert_has_calls(
