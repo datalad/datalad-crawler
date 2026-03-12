@@ -37,10 +37,10 @@ with open(opj(dirname(__file__), 'README.md')) as fp:
 
 requires = {
     'core': [
+        'boto3',
         'datalad>=0.14.0',
         'looseversion',
         'scrapy>=1.1.0',  # versioning is primarily for python3 support
-        'boto; python_version<"3.12"',  # broken on 3.12+ (vendored six); used by nodes/s3.py
     ],
     'devel-docs': [
         # Documentation

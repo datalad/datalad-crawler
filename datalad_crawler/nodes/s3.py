@@ -9,65 +9,135 @@
 """Basic crawler for the web
 """
 
+from __future__ import annotations
+
 import re
 import time
-
-try:
-    from boto.s3.key import Key
-    from boto.s3.prefix import Prefix
-    from boto.s3.deletemarker import DeleteMarker
-except ImportError:
-    Key = Prefix = DeleteMarker = None
+from datetime import datetime, timezone
+from typing import Any, Iterator, Optional
 
 from datalad.utils import updated
 from datalad.dochelpers import exc_str
-from datalad.support.network import iso8601_to_epoch
 from datalad.downloaders.providers import Providers
 from datalad.downloaders.s3 import S3Downloader
 from datalad.support.exceptions import TargetFileAbsent
 from datalad.support.network import urlquote
+from datalad.support.status import FileStatus
 from ..dbs.versions import SingleVersionDB
 
 from logging import getLogger
 lgr = getLogger('datalad.crawl.s3')
 
+# Sentinel for sorting entries that lack LastModified (e.g. prefixes)
+_MIN_DATETIME = datetime.min.replace(tzinfo=timezone.utc)
 
-def get_key_url(e, schema='http', versioned=True):
-    """Generate an s3:// or http:// url given a key
-    if versioned url is requested but version_id is None, no versionId suffix
-    will be added
+
+def _list_bucket(
+    client: Any,
+    bucket_name: str,
+    prefix: Optional[str],
+    versioned: bool,
+    recursive: bool,
+) -> Iterator[dict[str, Any]]:
+    """Paginate an S3 bucket listing, yielding tagged dicts.
+
+    Each yielded dict has a '_type' key:
+      'version'       - object version (from Versions in list_object_versions)
+      'delete_marker' - deletion marker (from DeleteMarkers)
+      'prefix'        - common prefix directory (from CommonPrefixes)
+
+    For non-versioned listing, objects from Contents are tagged 'version'.
     """
-	# Copied from datalad.support.s3, which is removing support for boto
-	#
-    # TODO: here we would need to encode the name since urlquote actually
-    # can't do that on its own... but then we should get a copy of the thing
-    # so we could still do the .format....
-    # ... = e.name.encode('utf-8')  # unicode isn't advised in URLs
-    e.name_urlquoted = urlquote(e.name)
+    kwargs = {'Bucket': bucket_name}
+    if prefix:
+        kwargs['Prefix'] = prefix
+    if not recursive:
+        kwargs['Delimiter'] = '/'
+
+    if versioned:
+        paginator = client.get_paginator('list_object_versions')
+        for page in paginator.paginate(**kwargs):
+            for v in page.get('Versions', []):
+                v['_type'] = 'version'
+                yield v
+            for dm in page.get('DeleteMarkers', []):
+                dm['_type'] = 'delete_marker'
+                yield dm
+            for cp in page.get('CommonPrefixes', []):
+                yield {
+                    '_type': 'prefix',
+                    'Key': cp['Prefix'],
+                    'VersionId': None,
+                    'LastModified': None,
+                    'IsLatest': None,
+                }
+    else:
+        paginator = client.get_paginator('list_objects_v2')
+        for page in paginator.paginate(**kwargs):
+            for obj in page.get('Contents', []):
+                obj['_type'] = 'version'
+                yield obj
+            for cp in page.get('CommonPrefixes', []):
+                yield {
+                    '_type': 'prefix',
+                    'Key': cp['Prefix'],
+                    'VersionId': None,
+                    'LastModified': None,
+                    'IsLatest': None,
+                }
+
+
+def get_key_url(
+    entry: dict[str, Any],
+    bucket_name: str,
+    schema: str = 'http',
+    versioned: bool = True,
+) -> str:
+    """Generate an s3:// or http:// url given an entry dict.
+
+    Parameters
+    ----------
+    entry : dict
+        Must have 'Key' and optionally 'VersionId'.
+    bucket_name : str
+    schema : {'http', 's3'}
+    versioned : bool
+        If True and entry has a VersionId, append ?versionId=...
+    """
+    name_urlquoted = urlquote(entry['Key'])
     if schema == 'http':
-        fmt = "http://{e.bucket.name}.s3.amazonaws.com/{e.name_urlquoted}"
+        url = "http://{}.s3.amazonaws.com/{}".format(bucket_name, name_urlquoted)
     elif schema == 's3':
-        fmt = "s3://{e.bucket.name}/{e.name_urlquoted}"
+        url = "s3://{}/{}".format(bucket_name, name_urlquoted)
     else:
         raise ValueError(schema)
-    if versioned and e.version_id is not None:
-        fmt += "?versionId={e.version_id}"
-    return fmt.format(e=e)
+    version_id = entry.get('VersionId')
+    if versioned and version_id is not None:
+        url += "?versionId={}".format(version_id)
+    return url
 
 
-def get_version_for_key(k, fmt='0.0.%Y%m%d'):
-    """Given a key return a version it identifies to be used for tagging
+def get_version_for_key(k: dict[str, Any], fmt: str = '0.0.%Y%m%d') -> Optional[str]:
+    """Given a key dict return a version string for tagging.
 
-    Uses 0.0.YYYYMMDD by default
+    Uses 0.0.YYYYMMDD by default.
     """
-    if isinstance(k, Prefix):
+    if k.get('_type') == 'prefix':
         return None
-    t = iso8601_to_epoch(k.last_modified)
-    # format it
+    last_modified = k.get('LastModified')
+    if last_modified is None:
+        return None
+    # boto3 returns datetime objects
+    if isinstance(last_modified, datetime):
+        t = last_modified.timestamp()
+    else:
+        # fallback for string timestamps
+        from datalad.support.network import iso8601_to_epoch
+        t = iso8601_to_epoch(last_modified)
     return time.strftime(fmt, time.gmtime(t))
 
 
-def _strip_prefix(s, prefix):
+def _strip_prefix(s: Optional[str], prefix: str) -> Optional[str]:
     """A helper to strip the prefix from the string if present"""
     return s[len(prefix):] if s and s.startswith(prefix) else s
 
@@ -138,12 +208,6 @@ class crawl_s3(object):
         self.exclude = exclude
 
     def __call__(self, data):
-        if Key is None:
-            raise ImportError(
-                "boto package is required for S3 crawling but could not be "
-                "imported. Install boto or use Python < 3.12."
-            )
-
         stats = data.get('datalad_stats', None)
         url = "s3://%s" % self.bucket
         if self.prefix:
@@ -151,14 +215,28 @@ class crawl_s3(object):
         providers = Providers.from_config_files()
         downloader = providers.get_provider(url).get_downloader(url)
 
-        # bucket = provider.authenticator.authenticate(bucket_name, provider.credential)
+        # Authenticate and establish connection.
+        # The URL may point at just the bucket (no key), so head_object
+        # can fail with TargetFileAbsent (404) or ParamValidationError
+        # (empty Key string).  Either way the client is now authenticated.
         try:
-            _ = downloader.get_status(url)  # just to authenticate and establish connection
+            _ = downloader.get_status(url)
         except TargetFileAbsent as exc:
             lgr.debug("Initial URL %s lead to not something downloader could fetch: %s", url, exc_str(exc))
+        except Exception as exc:
+            lgr.debug("Initial URL %s could not be fetched: %s", url, exc_str(exc))
             pass
-        bucket = downloader.bucket
-        assert(bucket is not None)
+
+        # boto3-based datalad exposes .client and ._bucket_name
+        if not hasattr(downloader, 'client'):
+            raise ImportError(
+                "Your datalad version uses the old boto-based S3Downloader. "
+                "Please upgrade datalad to a version with boto3 support."
+            )
+        client = downloader.client
+        bucket_name = downloader._bucket_name
+        assert client is not None
+        assert bucket_name is not None
 
         if self.repo:
             versions_db = SingleVersionDB(self.repo)
@@ -173,37 +251,54 @@ class crawl_s3(object):
         else:
             prev_version, versions_db = None, None
 
-        # TODO:  we could probably use headers to limit from previously crawled last-modified
-        # for now will be inefficient -- fetch all, sort, proceed
-        kwargs = {} if self.recursive else {'delimiter': '/'}
-        all_versions = (bucket.list_versions if self.versioned else bucket.list)(self.prefix, **kwargs)
+        # Fetch all entries, sort, proceed
+        all_versions = list(_list_bucket(
+            client, bucket_name, self.prefix, self.versioned, self.recursive
+        ))
+
         # Comparison becomes tricky whenever as if in our test bucket we have a collection
         # of rapid changes within the same ms, so they couldn't be sorted by last_modified, so we resolve based
         # on them being marked latest, or not being null (as could happen originally), and placing Delete after creation
         # In real life last_modified should be enough, but life can be as tough as we made it for 'testing'
-        def kf(k, f):
-            """Some elements, such as Prefix wouldn't have any of attributes to sort by"""
-            return getattr(k, f, '')
+        def kf(k: dict[str, Any], field: str) -> Any:
+            """Get field from dict, using appropriate defaults for sorting."""
+            val = k.get(field)
+            if val is None:
+                # For LastModified, use sentinel datetime for consistent sorting
+                if field == 'LastModified':
+                    return _MIN_DATETIME
+                return ''
+            return val
+
         # So ATM it would sort Prefixes first, but that is not necessarily correct...
         # Theoretically the only way to sort Prefix'es with the rest is traverse that Prefix
         # and take latest last_modified there but it is expensive, so -- big TODO if ever ;)
         # ACTUALLY -- may be there is an API call to return sorted by last_modified, then we
         # would need only a single entry in result to determine the last_modified for the Prefix, thus TODO
         cmp = lambda k: (
-            kf(k, 'last_modified'),
-            k.name,
-            kf(k, 'is_latest'),
-            kf(k, 'version_id') != 'null',
-            isinstance(k, DeleteMarker)
+            kf(k, 'LastModified'),
+            k['Key'],
+            bool(k.get('IsLatest')),
+            k.get('VersionId', 'null') != 'null',
+            k['_type'] == 'delete_marker'
         )
 
-        versions_sorted = sorted(all_versions, key=cmp)  # attrgetter('last_modified'))
-        # print '\n'.join(map(str, [cmp(k) for k in versions_sorted]))
+        versions_sorted = sorted(all_versions, key=cmp)
 
         version_fields = ['last-modified', 'name', 'version-id']
-        def get_version_cmp(k):
+
+        def _last_modified_for_cmp(k: dict[str, Any]) -> str:
+            """Return LastModified as iso8601 string for version DB comparison."""
+            lm = k.get('LastModified')
+            if lm is None:
+                return ''
+            if isinstance(lm, datetime):
+                return lm.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+            return lm
+
+        def get_version_cmp(k: dict[str, Any]) -> tuple[str, str, str]:
             # this one will return action version_id so we could uniquely identify
-            return kf(k, 'last_modified'), k.name, kf(k, 'version_id')
+            return _last_modified_for_cmp(k), k['Key'], k.get('VersionId', '')
 
         if prev_version:
             last_modified_, name_, version_id_ = [prev_version[f] for f in version_fields]
@@ -233,13 +328,13 @@ class crawl_s3(object):
 
         # adding None so we could deal with the last commit within the loop without duplicating
         # logic later outside
-        def update_versiondb(e, force=False):
+        def update_versiondb(e: Optional[dict[str, Any]], force: bool = False) -> None:
             # this way we could recover easier after a crash
             # TODO: config crawl.crawl_s3.versiondb.saveaftereach=True
             if e is not None and (force or True):
                 versions_db.version = dict(zip(version_fields, get_version_cmp(e)))
         for e in versions_sorted + [None]:
-            filename = e.name if e is not None else None
+            filename = e['Key'] if e is not None else None
             if (self.strip_prefix and self.prefix):
                 filename = _strip_prefix(filename, self.prefix)
             if filename and self.exclude and re.search(self.exclude, filename):
@@ -273,22 +368,30 @@ class crawl_s3(object):
             if filename:
                 # might be empty if e.g. it was the self.prefix directory removed
                 staged.add(filename)
-            if isinstance(e, Key):
-                if e.name.endswith('/'):
+            if e['_type'] == 'version':
+                if e['Key'].endswith('/'):
                     # signals a directory for which we don't care explicitly (git doesn't -- we don't! ;) )
                     continue
-                url = get_key_url(e, schema=self.url_schema, versioned=self.versioned)
+                url = get_key_url(e, bucket_name, schema=self.url_schema, versioned=self.versioned)
+                # Build FileStatus inline from the entry dict
+                last_modified = e.get('LastModified')
+                mtime = last_modified.timestamp() if isinstance(last_modified, datetime) else None
+                url_status = FileStatus(
+                    size=e.get('Size'),
+                    mtime=mtime,
+                    filename=e['Key'],
+                )
                 # generate and pass along the status right away since we can
                 yield updated(
                     data,
                     {
                         'url': url,
-                        'url_status': S3Downloader.get_key_status(e, dateformat='iso8601'),
+                        'url_status': url_status,
                         'filename': filename,
                         'datalad_action': 'annex',
                     })
                 update_versiondb(e)
-            elif isinstance(e, DeleteMarker):
+            elif e['_type'] == 'delete_marker':
                 if strategy == 'commit-versions':
                     # Since git doesn't care about empty directories for us makes sense only
                     # in the case when DeleteMarker is not pointing to the subdirectory
@@ -304,7 +407,7 @@ class crawl_s3(object):
                         lgr.info("Ignoring DeleteMarker for %s", filename)
 
                 update_versiondb(e)
-            elif isinstance(e, Prefix):
+            elif e['_type'] == 'prefix':
                 # so  we were provided a directory (in non-recursive traversal)
                 assert(not self.recursive)
                 yield updated(

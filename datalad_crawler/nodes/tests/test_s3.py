@@ -225,12 +225,6 @@ def test_crawl_s3_prefix():
 
 
 def test_get_key_url():
-    # Just to provide necessary structure
-    class e:
-        name = 'e'
-        version_id = '123'
-        class bucket:
-            name = "bucket"
-
-    eq_(get_key_url(e), 'http://bucket.s3.amazonaws.com/e?versionId=123')
-    eq_(get_key_url(e, versioned=False), 'http://bucket.s3.amazonaws.com/e')
+    entry = {'Key': 'e', 'VersionId': '123'}
+    eq_(get_key_url(entry, 'bucket'), 'http://bucket.s3.amazonaws.com/e?versionId=123')
+    eq_(get_key_url(entry, 'bucket', versioned=False), 'http://bucket.s3.amazonaws.com/e')
