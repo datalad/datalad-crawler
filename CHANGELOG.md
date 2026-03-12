@@ -1,3 +1,30 @@
+# 1.1.0 (Thu Mar 12 2026)
+
+#### 🚀 Enhancement
+
+- BF: Address datalad DeprecationWarnings for compatibility with datalad PR #7793, make compatible with boto3 by use of datalad interfaces [#149](https://github.com/datalad/datalad-crawler/pull/149) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🐛 Bug Fix
+
+- RF: Copy get_key_url from datalad.support.s3 [#143](https://github.com/datalad/datalad-crawler/pull/143) ([@effigies](https://github.com/effigies))
+- Add boto to install_requires since it does use it for s3 node [#138](https://github.com/datalad/datalad-crawler/pull/138) ([@yarikoptic](https://github.com/yarikoptic))
+- Convert .travis.yml to a GitHub Actions workflow [#140](https://github.com/datalad/datalad-crawler/pull/140) ([@jwodder](https://github.com/jwodder))
+
+#### 🏠 Internal
+
+- [gh-actions](deps): Bump codecov/codecov-action from 4 to 5 [#145](https://github.com/datalad/datalad-crawler/pull/145) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump actions/setup-python from 4 to 5 [#141](https://github.com/datalad/datalad-crawler/pull/141) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump actions/checkout from 3 to 4 [#137](https://github.com/datalad/datalad-crawler/pull/137) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 4
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Chris Markiewicz ([@effigies](https://github.com/effigies))
+- John T. Wodder II ([@jwodder](https://github.com/jwodder))
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 1.0.2 (Fri May 26 2023)
 
 #### 🐛 Bug Fix
