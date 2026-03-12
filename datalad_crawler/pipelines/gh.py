@@ -21,8 +21,8 @@ from datalad.downloaders.credentials import Token
 from datalad.support import path as op
 from datalad.support.gitrepo import GitRepo
 from datalad.utils import (
-    assure_bool,
-    assure_list_from_str,
+    ensure_bool,
+    ensure_list_from_str,
     rmtree,
     updated
 )
@@ -82,14 +82,14 @@ def pipeline(org=None,
       pipeline
     """
     assert org, "Organization must be provided"
-    aggregate = assure_bool(aggregate)
-    get_data = assure_bool(get_data)
-    drop_data = assure_bool(drop_data)
+    aggregate = ensure_bool(aggregate)
+    get_data = ensure_bool(get_data)
+    drop_data = ensure_bool(drop_data)
 
     import github as gh
     superds = Dataset('.')
     if metadata_nativetypes:
-        metadata_nativetypes = assure_list_from_str(metadata_nativetypes, sep=',')
+        metadata_nativetypes = ensure_list_from_str(metadata_nativetypes, sep=',')
 
     aggregate_later = []
     def crawl_github_org(data):

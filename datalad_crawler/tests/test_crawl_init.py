@@ -9,7 +9,7 @@
 
 
 from datalad.tests.utils_pytest import known_failure_direct_mode, eq_, assert_raises, assert_in
-from mock import patch
+from unittest.mock import patch
 from datalad.api import crawl_init
 from collections import OrderedDict
 from os.path import exists

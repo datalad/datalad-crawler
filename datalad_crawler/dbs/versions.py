@@ -11,7 +11,6 @@
 """
 
 from collections import OrderedDict
-from six import iteritems
 
 from datalad.utils import auto_repr
 from datalad_crawler.consts import CRAWLER_META_VERSIONS_DIR
@@ -84,12 +83,12 @@ class SingleVersionDB(JsonBaseDB):
         """Update known versions with new information
         """
         versions = self._db['versions']
-        for new_version, new_fpaths in iteritems(new_versions):
+        for new_version, new_fpaths in new_versions.items():
             if new_version not in versions:
                 # TODO: check that it is newer!?
                 versions[new_version] = {}
             fpaths = versions[new_version]
-            for new_fpath, entry in iteritems(new_fpaths):
+            for new_fpath, entry in new_fpaths.items():
                 if new_fpath not in fpaths:
                     # new new_fpath
                     fpaths[new_fpath] = {}

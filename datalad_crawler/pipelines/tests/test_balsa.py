@@ -14,7 +14,7 @@ import logging
 from os.path import exists
 from glob import glob
 from os.path import join as opj
-from mock import patch
+from unittest.mock import patch
 
 from ...nodes.crawl_url import crawl_url
 from ...nodes.matches import *

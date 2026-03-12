@@ -17,7 +17,6 @@ import pdb
 
 from stat import ST_MODE, S_IEXEC, S_IXOTH, S_IXGRP
 from os.path import curdir, isdir, isabs, exists, join as opj, split as ops
-from six import iteritems, string_types
 
 from datalad.support.network import get_url_disposition_filename
 from datalad.support.network import get_url_straight_filename
@@ -267,7 +266,7 @@ class _act_if(object):
         matched = True
         # finds if all match
         data_ = data.copy()
-        for k, v in iteritems(self.values):
+        for k, v in self.values.items():
             res = k in data and comp(v, data[k])
             if not res:
                 # do nothing and pass the data further
@@ -335,7 +334,7 @@ class range_node(object):
 
 
 def _string_as_list(x):
-    if isinstance(x, string_types):
+    if isinstance(x, str):
         return [x]
     return x
 

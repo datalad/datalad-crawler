@@ -18,7 +18,7 @@ from datalad_crawler.consts import DATALAD_SPECIAL_REMOTE
 from datalad.support.strings import get_replacement_dict
 
 from .simple_with_archives import pipeline as swa_pipeline
-from datalad.utils import assure_bool
+from datalad.utils import ensure_bool
 
 # Possibly instantiate a logger if you would like to log
 # during pipeline creation
@@ -94,14 +94,14 @@ def pipeline(bucket,
 
     annex_kw = {}
 
-    to_http = assure_bool(to_http)
-    tag = assure_bool(tag)
-    archives = assure_bool(archives)
-    no_annex = assure_bool(no_annex)
-    allow_dirty = assure_bool(allow_dirty)
-    drop = assure_bool(drop)
-    drop_force = assure_bool(drop_force)
-    drop_immediately = assure_bool(drop_immediately)
+    to_http = ensure_bool(to_http)
+    tag = ensure_bool(tag)
+    archives = ensure_bool(archives)
+    no_annex = ensure_bool(no_annex)
+    allow_dirty = ensure_bool(allow_dirty)
+    drop = ensure_bool(drop)
+    drop_force = ensure_bool(drop_force)
+    drop_immediately = ensure_bool(drop_immediately)
 
     if not to_http:
         annex_kw['special_remotes'] = [DATALAD_SPECIAL_REMOTE]

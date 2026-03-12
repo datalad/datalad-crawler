@@ -114,8 +114,8 @@ class BalsaSupport(object):
         for item_from_con in con_files:
             item_compare = normpath(opj('_files', item_from_con))
             if item_compare in files:
-                key_item = self.repo.get_file_key(item_from_con)
-                key_files_item = self.repo.get_file_key(item_compare)
+                key_item = self.repo.get_file_annexinfo(item_from_con).get('key', '')
+                key_files_item = self.repo.get_file_annexinfo(item_compare).get('key', '')
                 if key_item == key_files_item:
                     pass
                 else:

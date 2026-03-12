@@ -11,7 +11,7 @@ import os
 from glob import glob
 from os.path import join as opj
 from os.path import exists
-from mock import patch
+from unittest.mock import patch
 from functools import wraps
 
 from ...nodes.crawl_url import crawl_url
