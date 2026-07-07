@@ -1,3 +1,22 @@
+# 1.1.1 (Tue Jul 07 2026)
+
+#### 🐛 Bug Fix
+
+- BF: Migrate CRCNS DataCite fetch to /dois endpoint [#153](https://github.com/datalad/datalad-crawler/pull/153) ([@yarikoptic](https://github.com/yarikoptic))
+
+#### 🏠 Internal
+
+- [gh-actions](deps): Bump actions/setup-python from 5 to 6 [#147](https://github.com/datalad/datalad-crawler/pull/147) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump codecov/codecov-action from 5 to 7 [#151](https://github.com/datalad/datalad-crawler/pull/151) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- [gh-actions](deps): Bump actions/checkout from 4 to 7 [#152](https://github.com/datalad/datalad-crawler/pull/152) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Yaroslav Halchenko ([@yarikoptic](https://github.com/yarikoptic))
+
+---
+
 # 1.1.0 (Thu Mar 12 2026)
 
 #### 🚀 Enhancement
