@@ -34,9 +34,10 @@ lgr = getLogger("datalad.crawler.pipelines.crcns")
 
 def fetch_datacite_metadata():
     import json
-    # CRCNS.org is publisher-id "cdl.ucbcrcns"
-    # We request all of them at once
-    arx = 'https://api.datacite.org/works?data-center-id=cdl.ucbcrcns&page%5Bsize%5D=1000'
+    # CRCNS.org datasets use DOI prefix 10.6080 (client cdl.ucb, publisher CRCNS.org).
+    # detail=true is required to include the base64-encoded DataCite XML in attributes.xml;
+    # the legacy /works endpoint was retired by DataCite (returns 410 Gone).
+    arx = 'https://api.datacite.org/dois?prefix=10.6080&detail=true&page%5Bsize%5D=1000'
     text = get_cached_url_content(arx, name='crcns', maxage=1)
     return json.loads(text)
 
@@ -79,7 +80,7 @@ def get_metadata(dataset=None):
             lgr.debug("Empty xml in record #%d, skipping for now", i)
             continue
 
-        xml_ = base64.decodestring(json_xml).decode('utf-8')
+        xml_ = base64.b64decode(json_xml).decode('utf-8')
         reg = re.search('AlternativeTitle.?>CRCNS.org ([^<]*)<', xml_)
 
         if not reg:

@@ -43,7 +43,7 @@ def test_get_metadata():
         aa1_meta = get_metadata('aa-1')
         ok_startswith(aa1_meta, '<?xml')
     except AccessFailedError as e:
-        if str(e).startswith('Access to https://search.datacite.org') and \
+        if str(e).startswith('Access to https://api.datacite.org') and \
                 str(e).endswith('has failed: status code 502'):
             pytest.skip("Probably datacite.org blocked us once again")
     except AccessDeniedError:
