@@ -1,12 +1,12 @@
 #!/bin/bash
 # Create a datalad (sub)dataset for every "folder" (common prefix) in an S3
 # bucket, initialize an "importtree" S3 special remote in each of them, and
-# save them all into the current dataset.
+# save them all into the current dataset.  Actual `git annex import` is left
+# to be done separately.
 #
-# Usage:  s3_create_subdatasets.sh [-n] [-i] BUCKET[/PREFIX] [DATALAD CREATE OPTIONS...]
+# Usage:  s3_create_subdatasets.sh [-n] BUCKET[/PREFIX] [DATALAD CREATE OPTIONS...]
 #
 #   -n    dry run: just print what would be done
-#   -i    also `git annex import` the current branch from the new remote
 #
 # Bucket region and versioning are sensed via the s3api, so the remote gets
 # the right host/datacenter and versioning=yes only if it truly is versioned.
@@ -18,15 +18,8 @@
 set -eu
 
 dry=
-do_import=
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -n) dry=echo; shift;;
-        -i) do_import=1; shift;;
-        *)  break;;
-    esac
-done
-[ $# -ge 1 ] || { sed -n '2,15p' "$0"; exit 1; }
+if [ "${1:-}" = "-n" ]; then dry=echo; shift; fi
+[ $# -ge 1 ] || { sed -n '2,16p' "$0"; exit 1; }
 
 bucket="${1%/}"; shift          # everything else is passed to `datalad create`
 bucket_name="${bucket%%/*}"     # bucket without the optional prefix
@@ -76,11 +69,6 @@ for folder in "${folders[@]}"; do
         host="$host" port=443 datacenter="$datacenter" publicurl="$publicurl" \
         versioning="$versioning" \
         importtree=yes signature=anonymous encryption=none autoenable=yes
-    if [ -n "$do_import" ]; then
-        branch=$(git -C "$folder" symbolic-ref --short HEAD 2>/dev/null || echo BRANCH)
-        $dry git -C "$folder" annex import "$branch" --from s3-bucket
-        $dry datalad save -d "$folder" -m "Import tree from s3://$bucket_name/$prefix$folder/"
-    fi
 done
 
 $dry datalad save -d . \
