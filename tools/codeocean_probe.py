@@ -130,15 +130,69 @@ def probe_signed_url_headers(signed_url, timeout=30) -> dict:
         return {'ok': False, 'status': None, 'error': str(exc)}
 
     etag = (headers.get('etag') or '').strip('"')
+    content_range = headers.get('content-range')
+    # "bytes 0-0/1234" -> 1234
+    total_size = None
+    if content_range and '/' in content_range:
+        try:
+            total_size = int(content_range.rsplit('/', 1)[1])
+        except ValueError:
+            pass
+
+    nparts = None
+    if '-' in etag:
+        try:
+            nparts = int(etag.rsplit('-', 1)[1])
+        except ValueError:
+            pass
+
     return {
         'ok': True,
         'status': status,
         'etag': etag,
         # a plain 32-char hex ETag is the object's MD5 -> et:MD5-s{size}--{etag}
         'etag_is_md5': bool(etag) and '-' not in etag and len(etag) == 32,
-        'content_range': headers.get('content-range'),
+        'content_range': content_range,
+        'size': total_size,
+        # a multipart ETag is reproducible given the part size -- see
+        # infer_part_size() -- so bound it from what we can see
+        'multipart': infer_part_size(total_size, nparts) if nparts else {},
         'checksums': {k: v for k, v in headers.items() if k.startswith('x-amz-checksum-')},
         'accept_ranges': headers.get('accept-ranges'),
+    }
+
+
+# part sizes commonly baked into uploaders (boto3/awscli default 8MiB, rclone
+# 5MiB, various tools use round decimal MB); used only to label an inferred range
+_COMMON_PART_SIZES = (
+    [(n * 1024 * 1024, '%dMiB' % n)
+     for n in (5, 8, 10, 15, 16, 20, 25, 32, 50, 64, 100, 128, 256, 512)]
+    + [(n * 1000 * 1000, '%dMB' % n)
+       for n in (5, 8, 10, 16, 25, 50, 64, 100, 128, 256, 512)]
+)
+
+
+def infer_part_size(size, nparts) -> dict:
+    """Bound the multipart part size from an object's size and part count
+
+    An S3 multipart ETag is md5 of the concatenated part md5s, suffixed
+    ``-<nparts>``.  It is reproducible only if the part size is known, which is
+    how DANDI's ``dandi-etag`` works.  With all parts equal except the last,
+    a part size P satisfies ``(N-1)*P < size <= N*P``, i.e.
+    ``ceil(size/N) <= P <= floor((size-1)/(N-1))``.  Intersecting that interval
+    over enough objects usually pins P to one standard value.
+    """
+    if not size or not nparts or nparts < 1:
+        return {}
+    low = -(-size // nparts)                       # ceil
+    high = None if nparts == 1 else (size - 1) // (nparts - 1)
+    candidates = [label for value, label in _COMMON_PART_SIZES
+                  if value >= low and (high is None or value <= high)]
+    return {
+        'nparts': nparts,
+        'part_size_min': low,
+        'part_size_max': high,          # None == unbounded (single part)
+        'candidates': candidates,
     }
 
 
@@ -265,12 +319,30 @@ def probe_api(api, capsule_id, token, results, label, sample=5):
             print("     ranged GET: etag=%r is_md5=%s content-range=%r checksums=%s"
                   % (head['etag'], head['etag_is_md5'],
                      head['content_range'], head['checksums'] or '{}'))
+            mp = head.get('multipart')
+            if mp:
+                print("     multipart: %d parts, part size in [%s, %s]%s"
+                      % (mp['nparts'], mp['part_size_min'],
+                         mp['part_size_max'] if mp['part_size_max'] is not None else 'inf',
+                         (' matching %s' % ', '.join(mp['candidates']))
+                         if mp['candidates'] else ' (no standard size matches)'))
 
-        mintable = [f for f in entry['files'].values()
-                    if f.get('signed_url_headers', {}).get('etag_is_md5')]
+        heads = [f.get('signed_url_headers', {}) for f in entry['files'].values()]
+        mintable = [h for h in heads if h.get('etag_is_md5')]
         if entry['files']:
             print("     -> MD5E keys mintable without download for %d/%d sampled objects"
                   % (len(mintable), len(entry['files'])))
+        # do all multipart objects agree on one part size?  if so, their ETags
+        # are reproducible (dandi-etag style) and usable for change detection
+        common = None
+        for h in heads:
+            cands = set((h.get('multipart') or {}).get('candidates') or [])
+            if not cands:
+                continue
+            common = cands if common is None else (common & cands)
+        if common is not None:
+            print("     -> part size consistent with: %s"
+                  % (', '.join(sorted(common)) or 'NOTHING standard (mixed or unusual chunking)'))
 
         # one asset is enough to characterise the deployment
         break

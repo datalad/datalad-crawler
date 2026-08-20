@@ -237,7 +237,7 @@ datalad-crawler's handler) on the consumer's machine.  That is a real
 constraint, but a far smaller one than an unmaintained bespoke special remote —
 and for external assets (§5d) it does not apply.
 
-## 5f. Can we mint keys without downloading?
+### 5f. Can we mint keys without downloading?
 
 Tempting, and the machinery exists: `datalad addurls --key` takes a format
 string `"[et:]<backend>[-s<bytes>]--<hash>"` (e.g. `et:MD5-s{size}--{md5sum}`)
@@ -252,26 +252,68 @@ API, so a checksum-keyed crawl has no source to key from.
 
 Two ways around it, neither free:
 
-### Storage-layer ETags (opportunistic, unreliable)
+#### Storage-layer ETags
 
-The presigned URL points at S3, whose `ETag` *is* the MD5 — but only for
-single-part uploads.  Anything Code Ocean uploaded as multipart returns
-`"<hex>-<N>"`, a hash of hashes, useless as an annex key.  That fails precisely
-on the large files where skipping the download would pay off.  Two mechanics
-worth knowing if we try anyway:
+The presigned URL points at S3, so an `ETag` is available for one cheap request
+per file.  Two mechanics first:
 
 * A SigV4 presigned URL is signed *per method*, so `HEAD` against a GET-signed
   URL returns 403.  Use `GET` with `Range: bytes=0-0` instead: one byte on the
   wire, and the response carries `ETag` plus `Content-Range: bytes 0-0/<total>`.
-* Newer objects may also expose `x-amz-checksum-sha256`/`-crc32` when requested
-  with `x-amz-checksum-mode: ENABLED`; whether that header survives presigning
-  is untested.
+* Objects may also expose `x-amz-checksum-sha256`/`-crc32`/`-crc64nvme` when
+  asked with `x-amz-checksum-mode: ENABLED`; whether that header survives
+  presigning is untested.  Note AWS only offers *full-object* checksums for the
+  CRC families — SHA-1/SHA-256 on a multipart object are composite, i.e. the
+  same hash-of-hashes shape as the ETag — and git-annex has no CRC backend, so
+  this helps verification, not keys.
 
-So: a per-file request (cheap) yielding a usable MD5 for an unpredictable subset
-of files.  Worth measuring in the probe before building on it, and it must fall
-back to one of the other modes per file.
+**Single-part uploads** give an ETag that *is* the object's MD5: those files can
+be keyed as `et:MD5-s{size}--{etag}` with no download at all.
 
-### URL keys — the actually fast path
+**Multipart uploads** give `md5(concat(md5(part_i)))-<N>`.  That is
+deterministic given the part size — which is exactly what DANDI relies on for
+`dandi-etag` — but it is still not a whole-file MD5, and git-annex has no
+backend for it.  So knowing the part size does *not* unlock key minting.  It is
+worth having anyway, for three things:
+
+* **Change detection.**  Record the ETag in the crawler's `statusdb` and a
+  re-crawl can skip unchanged files on one ranged request each, rather than
+  trusting size alone.
+* **Verification.**  After downloading, recompute the multipart ETag locally and
+  confirm we got what Code Ocean stores.
+* **Dedup sniffing.**  Two data assets sharing content have identical ETags,
+  provided they were uploaded through the same path.
+
+(The exotic escape hatch — git-annex has supported *external backends* since
+8.20201116, so an `S3ETAG` backend is technically constructible — is not worth
+it: such keys are verifiable only by our own code, and nothing else in the
+ecosystem could check them.)
+
+#### Do we know Code Ocean's part size?
+
+Not yet, and it probably is not a single answer.  Data assets arrive by at least
+three paths, each likely chunked by different code: server-side copy from a
+user's bucket (`AWSS3Source`), browser upload through the web app, and results
+captured from a computation (`ComputationSource`).  For
+`keep_on_external_storage` assets the bytes never move, so the chunking is
+whatever the *user's* uploader did — unknowable in general, though still stable
+per object.
+
+It is measurable rather than guessable, and the probe now does it.  With all
+parts equal except the last, a part size `P` for an object of `size` bytes in
+`N` parts satisfies `ceil(size/N) <= P <= floor((size-1)/(N-1))`; intersecting
+that interval across sampled objects usually pins one standard value.  A 100 MiB
+object in 13 parts, for instance, narrows to exactly 8 MiB (boto3's default).
+`tools/codeocean_probe.py` reports the interval per object plus the candidates
+consistent across the whole sample, so "is Code Ocean's chunking uniform, and
+what is it" is one command away.
+
+Caveat even if it is uniform: an ETag is not stable across a storage migration
+on Code Ocean's side, since a re-copy re-chunks.  Fine for change detection,
+wrong as an identity to bake into keys — which is the same conclusion the
+backend argument reaches from the other direction.
+
+#### URL keys — the actually fast path
 
 This is the one that changes now that §5 records *stable* URLs.  An earlier
 draft of this document said `mode='fast'`/`'relaxed'` were unusable; that was
@@ -295,7 +337,7 @@ Costs, all of which the user should choose knowingly:
   layout change on Code Ocean's side is still a config edit rather than a
   re-keying of every dataset.
 
-### Recommendation
+#### Recommendation
 
 Make it a pipeline argument, defaulting to correctness:
 
@@ -311,9 +353,32 @@ for the rest.  A `git annex migrate` after the fact can also upgrade URL keys to
 checksummed ones for content that does get downloaded, so `fast` is not a
 one-way door.
 
-Worth asking Code Ocean to expose per-file checksums in `POST
-data_assets/{id}/files`, incidentally — it is one optional field on `FolderItem`
-and it would make this whole section moot.
+#### Asking Code Ocean for checksums
+
+One optional field on `FolderItem` — an md5 or sha256 per file — would make this
+entire section moot, so it is worth asking.  Where:
+
+* **`github.com/codeocean/codeocean-sdk-python`** — public issue tracker, active
+  (last release Aug 2026, few open issues), and maintained by the people who own
+  the API surface.  Best first stop: an SDK issue about a missing API field
+  lands in front of the right team and stays publicly visible.
+  `codeocean/codeocean-mcp-server` and `codeocean/user-docs` are also public and
+  active if the discussion fits better there.
+* **support@codeocean.com** — the documented support channel (see the "More
+  Support" page in the user guide), plus their community Slack workspace.
+* **Fellow customers.**  The Allen Institute for Neural Dynamics maintains
+  `AllenNeuralDynamics/aind-codeocean-api` and moves large data through Code
+  Ocean; a feature request carrying a customer's weight travels further than one
+  from an outside crawler author.
+
+Would they have it to expose?  Guarded pessimism.  They certainly have S3
+ETags, and their capsule "verified" machinery shows they think about integrity —
+but the API model has no digest field *anywhere*, not even a total-content hash
+on `DataAsset`, which suggests per-file digests are not indexed rather than
+merely unexposed.  For internal assets they own the ingest path and could record
+one cheaply; for `keep_on_external_storage` assets they never touch the bytes
+and could only report the ETag.  So: worth asking, plausibly answered with
+"here is the ETag", and the design should not wait on it.
 
 ## 6. Versions
 
@@ -457,9 +522,12 @@ is needed.
    URLs minted early go stale.
 5. **Slug vs numeric id.**  The web URL uses `3822095`; the API `Capsule` record
    carries both `id` and `slug`.  Which one do the API routes accept?
-6. **How many stored objects have a single-part (= MD5) ETag?**  The probe
-   samples `--sample N` files per asset and reports the ratio; it decides
-   whether the opportunistic key-minting of §5f is worth implementing at all.
+6. **ETag shape: how many objects are single-part, and is the multipart part
+   size uniform?**  The probe samples `--sample N` files per asset, reports the
+   fraction whose ETag is a usable MD5, and narrows the part size from
+   (size, part-count) — deciding both whether §5f's opportunistic key minting is
+   worth building and whether ETags are reproducible enough to use for change
+   detection.
 7. **Does a 401 from the API carry a `WWW-Authenticate` header?**  Decides
    whether stock `DataladAuth` works in the URL handler or needs the
    `datalad-publicneuro`-style subclass (§8).
