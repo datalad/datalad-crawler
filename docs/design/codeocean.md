@@ -109,66 +109,136 @@ If the capsule was itself cloned from an external repo (`cloned_from_url` on the
 capsule record), that URL is worth recording as another remote — it is the
 upstream of the upstream.
 
-## 5. The hard problem: signed URLs expire
+## 5. The hard problem: signed URLs expire — solved with datalad-next's *uncurl*
 
 `Annexificator` ultimately runs `git annex addurl <url>`, and the URL it is
 handed is recorded in the annex branch forever.  A Code Ocean
 `download_url` is a presigned S3 URL valid for minutes-to-an-hour, so a naive
 crawl produces a dataset whose `datalad get` starts failing the same afternoon —
 the content is there for whoever crawled it and unobtainable for everybody else.
-Three tiers, in order of preference:
 
-### 5a. External data assets → register the real S3 URI
+The fix is *not* to write another special remote.  datalad-next's
+[uncurl](https://docs.datalad.org/projects/next/en/stable/generated/datalad_next.annexremotes.uncurl.html)
+already provides the whole git-annex side of it, and it is extensible in exactly
+the direction we need.
 
-When `data_asset.source_bucket.bucket` is set (`kind == "external"`, i.e. the
-data was never copied into Code Ocean), the durable address is
-`s3://<bucket>/<prefix>/<path>`.  Register that and the existing datalad S3
-machinery (`datalad_crawler/nodes/s3.py`, the `datalad` special remote) handles
-retrieval, with public buckets needing no Code Ocean account at all.  This is
-the best possible outcome and costs nothing extra to support.
+### 5a. What uncurl gives us for free
 
-### 5b. Internal data assets → a `dl+codeocean:` special remote
+Read from `datalad_next/annexremotes/uncurl.py` and
+`datalad_next/url_operations/any.py` (datalad-next 1.6.0):
 
-For internal assets the only durable identifier is (`data_asset_id`, `path`).
-Ship an external special remote — `git-annex-remote-codeocean`, exactly
-analogous to `datalad-archives` and its `dl+archive:` URLs — that:
+* **A pseudo-URL scheme is enough.**  `claimurl()` claims any URL that a
+  registered URL handler supports (or, when `match` expressions are configured,
+  any URL matching one).  `checkurl()` → `stat()`, `transfer_retrieve()` →
+  `download()`, `checkpresent()` → `stat()`.  Everything annex-facing is done.
+* **Handlers are pluggable**, either purely by config —
+  `datalad.url-handler.<url-regex>.class` (plus an optional `.kwargs` JSON blob)
+  — or by inserting into `datalad_next.url_operations.any._url_handlers`.
+* **Credentials come from datalad-next's credential system**, with interactive
+  prompting and secure storage, rather than the core "providers" mechanism.
+* **On-access URL rewriting.**  `match` expressions decompose a recorded URL
+  into named groups, and a `url` template recomposes it.  Both can live in
+  *committed* dataset config (`remote.<name>.uncurl-url`,
+  `remote.<name>.uncurl-match` in `.datalad/config`), so clones inherit them and
+  a storage migration on Code Ocean's side is a one-line config change instead
+  of rewriting URLs for every key in every dataset.
 
-* `CLAIMURL` / `CHECKURL` for `dl+codeocean://<domain>/data_assets/<id>/<path>`;
-* on `TRANSFER RETRIEVE`, calls `GET data_assets/<id>/files/urls?path=<path>`
-  with the user's token, then downloads the freshly minted `download_url`;
-* `CHECKPRESENT` = the same call succeeding (or a `POST …/files` listing hit,
-  which is cheaper and does not mint a URL).
+### 5b. What still needs writing: a ~150-line URL handler
 
-Then the crawl records a URL that is stable for as long as the capsule exists,
-and any user with a token (or none, if the capsule is public and the API allows
-anonymous reads — see §8) can `datalad get`.
-
-Practical way to get there without touching `Annexificator`: let it annex the
-file through the presigned URL as today (real download, real checksum), then
-follow it with a small node that rewrites the recorded URL:
+uncurl's templates are static string formatting; they cannot perform the
+two-step handshake Code Ocean requires (`GET data_assets/{id}/files/urls?path=…`
+→ JSON → presigned URL → download).  That step belongs in a `UrlOperations`
+handler:
 
 ```python
-def register_stable_url(data):
-    fpath = relpath(data['filepath'], annex.repo.path)
-    key = annex.repo.call_annex_oneline(['lookupkey', fpath])
-    annex.repo.call_annex(['registerurl', key, data['codeocean_url']])
-    annex.repo.call_annex(['rmurl', fpath, data['url']])   # the presigned one
-    yield data
+class CodeOceanUrlOperations(HttpUrlOperations):
+    """Handles codeocean+https://<domain>/data_assets/<id>/<path>"""
+    def stat(self, url, *, credential=None, timeout=None):
+        # POST data_assets/{id}/files {"path": dirname} -> size of `path`
+    def download(self, from_url, to_path, *, credential=None, hash=None, timeout=None):
+        # GET data_assets/{id}/files/urls?path=... -> download_url (fresh, valid now)
+        # then stream it with the inherited HttpUrlOperations machinery
 ```
 
-Files that land in git rather than annex (per `annex.largefiles`) have no URL
-and need no rewriting — guard on `lookupkey` returning empty.
+**This exact pattern is already deployed**: `datalad-publicneuro` ships
+`PublicNeuroHttpUrlOperations` for `publicneuro+https://<dataset-id>/<path>`,
+whose `download()` performs a three-request handshake (authenticate → item info
+→ mint download link) before streaming.  It registers the handler in the
+extension's `__init__.py`:
 
-### 5c. Fallback
+```python
+from datalad_next.url_operations import any
+any._url_handlers['publicneuro\\+https'] = (
+    'datalad_publicneuro.url_operations.publicneuro.PublicNeuroHttpUrlOperations',)
+```
 
-If neither applies (or before the special remote exists), still crawl: the
-content is correct and checksummed, the metadata records
-`data_asset_id` + `path` per file in `.datalad/meta/codeocean/`, and the URLs can
-be re-registered later by a one-off script.  Just do not pretend the dataset is
-self-servicing — say so in the README the pipeline generates.
+and ships a three-line console script so users get a remote that has the handler
+pre-registered:
 
-Corollary: `mode='fast'`/`'relaxed'` are not usable here.  They skip the
-download, and a recorded presigned URL that was never fetched is worthless.
+```python
+# git-annex-remote-uncurl-codeocean
+from datalad_next.annexremotes import uncurl   # import registers our handler
+def main():
+    uncurl.main()
+```
+
+```sh
+git annex initremote uncurl-codeocean type=external \
+    externaltype=uncurl-codeocean encryption=none autoenable=true
+```
+
+The pure-config alternative needs no console script at all, just stock `uncurl`
+plus, in the dataset's `.datalad/config`:
+
+```ini
+[datalad "url-handler.codeocean\\+https"]
+    class = datalad_crawler.url_operations.codeocean.CodeOceanUrlOperations
+```
+
+Note `_url_handlers` is private API (datalad-next's own comment flags the
+missing entry-point mechanism), so prefer the config route and keep the
+`__init__.py` insertion as the convenience path.
+
+### 5c. Consequences for the crawl itself
+
+Because uncurl claims `codeocean+https:` URLs at `addurl` time, the crawler can
+record the **stable** URL directly and let uncurl do the actual download.  No
+presigned URL ever enters git history, and the `registerurl`/`rmurl` rewriting
+dance of an earlier draft disappears.
+
+One wrinkle: `Annexificator.__call__` stats the URL through datalad-core's
+`Providers`, which knows nothing of `codeocean+https:`.  It honours a
+pre-supplied status though — `_get_url_status()` returns `data['url_status']` if
+present — and the file listing already told us the size, so the crawl node just
+yields it:
+
+```python
+yield {
+    'url': f'codeocean+https://{domain}/data_assets/{asset_id}/{path}',
+    'url_status': FileStatus(size=item['size']),   # datalad.support.status
+    'filename': op.basename(path),
+    'path': op.join('data', mount, op.dirname(path)),
+}
+```
+
+### 5d. External data assets need nothing at all
+
+When `data_asset.source_bucket.bucket` is set (`kind == "external"`, the data was
+never copied into Code Ocean), the durable address is the bucket itself.
+Recording `https://<bucket>.s3.amazonaws.com/<prefix>/<path>` makes stock uncurl
+(or plain git-annex, or the core `datalad` remote) sufficient — no handler, no
+Code Ocean account for public buckets.  Worth detecting and preferring, and it
+is the first thing §9's probe checks.
+
+### 5e. Cost of the dependency
+
+`datalad get` on such a dataset requires datalad-next (and, for internal assets,
+datalad-crawler's handler) on the consumer's machine.  That is a real
+constraint, but a far smaller one than an unmaintained bespoke special remote —
+and for external assets (§5d) it does not apply.
+
+Corollary either way: `mode='fast'`/`'relaxed'` remain unusable — they skip the
+download, so nothing is checksummed.
 
 ## 6. Versions
 
@@ -219,7 +289,9 @@ def pipeline(capsule_id,
              largefiles='largerthan=100kb'):
     annex = Annexificator(
         create=False, statusdb='json',
-        special_remotes=[DATALAD_SPECIAL_REMOTE],
+        # `init_datalad_remote` derives externaltype from the remote name,
+        # so the name must match the shipped console script (§5b)
+        special_remotes=['uncurl-codeocean'],
         largefiles=largefiles,
         skip_problematic=False,
     )
@@ -228,9 +300,9 @@ def pipeline(capsule_id,
         crawl_capsule_metadata(client, capsule_id),      # -> .datalad/meta/codeocean/*.json
         annex.switch_branch('incoming'),
         [
-            crawl_data_assets(client, capsule_id, version),  # yields url/filename/path per file
+            # yields codeocean+https:// urls + url_status per file (§5c)
+            crawl_data_assets(client, capsule_id, version),
             annex,
-            register_stable_url,
         ],
         annex.switch_branch('master'),
         annex.merge_branch('incoming', allow_unrelated=False),
@@ -254,16 +326,19 @@ datalad crawl
 
 ## 8. Credentials
 
-Follow the `gh.py` idiom rather than inventing a new mechanism: try a stored
-datalad credential first, fall back to config.
+Two consumers, two systems, which is unavoidable while datalad-crawler sits on
+datalad-core and uncurl sits on datalad-next.
+
+*Crawl time* (the pipeline's own API calls) follows the `gh.py` idiom — a stored
+datalad credential, falling back to config:
 
 ```python
 from datalad.downloaders.credentials import Token
 token = Token('codeocean.com')()['token']        # or cfg.get('datalad.codeocean.token')
 ```
 
-For downloads through datalad's downloaders, a provider entry pins the auth type
-(token-as-username Basic):
+with a provider entry pinning the auth type (token-as-username Basic) for
+anything routed through datalad-core downloaders:
 
 ```ini
 [provider:codeocean]
@@ -274,6 +349,13 @@ credential = codeocean
 [credential:codeocean]
 type = user_password        # user = <API token>, password = ""
 ```
+
+*Get time* (the URL handler under uncurl) uses datalad-next's credential system
+via `DataladAuth`, which prompts and offers to store on first use.  Caveat worth
+budgeting for: `DataladAuth` keys off the server's `WWW-Authenticate` header, and
+`datalad-publicneuro` had to subclass it precisely because their server omits
+that header on 401.  If Code Ocean does the same (§9.7), expect a similar small
+subclass that injects `Basic realm="codeocean"`.
 
 ## 9. Open questions — must be probed against the live service
 
@@ -288,10 +370,10 @@ is needed.
    `GET /api/v1/capsules/3822095` — and more importantly `app_panel`,
    `data_assets/{id}/files` and `files/urls` — also work without a token for a
    *published* capsule?  If yes, crawling the Open Science Library needs no
-   account at all, and the special remote of §5b can retrieve anonymously.
+   account at all, and the uncurl handler of §5b can retrieve anonymously.
 2. **Are published-capsule data assets external?**  If public capsule data lives
-   in a public S3 bucket (`source_bucket` populated), §5a covers everything and
-   §5b becomes optional.
+   in a public S3 bucket (`source_bucket` populated), §5d covers everything and
+   the handler of §5b becomes optional.
 3. **Release tags in the capsule git repo.**  Does `capsule-3822095.git` carry
    `v1`/`v2` tags, or must versions be resolved via `submission.commit`?  This
    decides whether §6's per-version walk is straightforward.
@@ -300,18 +382,22 @@ is needed.
    URLs minted early go stale.
 5. **Slug vs numeric id.**  The web URL uses `3822095`; the API `Capsule` record
    carries both `id` and `slug`.  Which one do the API routes accept?
-6. Whether `/results` is worth crawling by default (published capsules ship a
+7. **Does a 401 from the API carry a `WWW-Authenticate` header?**  Decides
+   whether stock `DataladAuth` works in the URL handler or needs the
+   `datalad-publicneuro`-style subclass (§8).
+8. Whether `/results` is worth crawling by default (published capsules ship a
    "Reproducible Run" result set, but it may be large and is derived data).
 
 ## 10. Implementation order
 
 1. Run `tools/codeocean_probe.py` against a published capsule and a private one;
    record answers to §9 here.
-2. `datalad_crawler/pipelines/codeocean.py`: client + metadata + git-remote node
-   + data-asset crawl, snapshot of the latest version only, presigned URLs
-   recorded as-is (§5c).  Tests in the `test_xnat.py` style with recorded API
-   responses.
-3. `git-annex-remote-codeocean` + the `register_stable_url` node (§5b), plus
-   `s3://` registration for external assets (§5a).
+2. `datalad_crawler/url_operations/codeocean.py`: the `UrlOperations` handler
+   (§5b) — it is small, standalone and testable against recorded responses, and
+   everything else depends on it.
+3. `datalad_crawler/pipelines/codeocean.py`: client + metadata + git-remote node
+   + data-asset crawl, snapshot of the latest version only, recording
+   `codeocean+https:` URLs (§5c) and bucket URLs where available (§5d).  Tests
+   in the `test_xnat.py` style with recorded API responses.
 4. Per-version history walk and tagging (§6).
 5. `superdataset_pipeline` over `POST capsules/search` (§7).
