@@ -19,6 +19,8 @@ Answers, for a given capsule:
   directly with an s3:// URL)
 - what a file listing and a (presigned) download URL actually look like, and
   for how long the URL stays valid
+- whether stored objects carry a single-part ETag (i.e. a usable MD5), which
+  would allow minting git-annex keys without downloading the data
 - whether the capsule git repo carries per-version release tags
 
 Only the standard library is used, so this can be run anywhere::
@@ -102,6 +104,44 @@ def request(url, token=None, data=None, timeout=30) -> Result:
         return Result(True, status=status, value=payload[:500])
 
 
+def probe_signed_url_headers(signed_url, timeout=30) -> dict:
+    """Ask the storage layer for an ETag without downloading the object
+
+    A SigV4 presigned URL is signed per method, so HEAD against a GET-signed URL
+    is rejected.  A ranged GET of a single byte works, and the response carries
+    the ETag and the full size in Content-Range.  An ETag of the form
+    ``"<hex>-<N>"`` is a multipart checksum and is *not* the MD5, hence unusable
+    for minting an annex key.
+    """
+    req = urllib.request.Request(signed_url, headers={
+        'Range': 'bytes=0-0',
+        # may or may not survive presigning, but costs nothing to ask
+        'x-amz-checksum-mode': 'ENABLED',
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            headers = {k.lower(): v for k, v in response.headers.items()}
+            status = response.status
+            response.read(1)
+    except urllib.error.HTTPError as exc:
+        return {'ok': False, 'status': exc.code,
+                'error': exc.read().decode('utf-8', 'replace')[:200]}
+    except Exception as exc:
+        return {'ok': False, 'status': None, 'error': str(exc)}
+
+    etag = (headers.get('etag') or '').strip('"')
+    return {
+        'ok': True,
+        'status': status,
+        'etag': etag,
+        # a plain 32-char hex ETag is the object's MD5 -> et:MD5-s{size}--{etag}
+        'etag_is_md5': bool(etag) and '-' not in etag and len(etag) == 32,
+        'content_range': headers.get('content-range'),
+        'checksums': {k: v for k, v in headers.items() if k.startswith('x-amz-checksum-')},
+        'accept_ranges': headers.get('accept-ranges'),
+    }
+
+
 def url_expires_in(signed_url) -> Optional[str]:
     """Extract the lifetime of a presigned S3 URL, if it looks like one"""
     query = urllib.parse.parse_qs(urllib.parse.urlsplit(signed_url).query)
@@ -111,7 +151,7 @@ def url_expires_in(signed_url) -> Optional[str]:
     return None
 
 
-def probe_api(api, capsule_id, token, results, label):
+def probe_api(api, capsule_id, token, results, label, sample=5):
     """Probe every read endpoint we care about, with or without a token"""
     print("\n== API as %s ==" % label)
 
@@ -189,24 +229,48 @@ def probe_api(api, capsule_id, token, results, label):
         entry['root_listing'] = listing.asdict()
         print("  POST data_assets/%s/files : %r" % (asset_id, listing))
 
-        first_file = None
+        files = []
         if listing.ok and isinstance(listing.value, dict):
             for item in (listing.value.get('items') or [])[:20]:
                 print("     %-6s %10s  %s" % (item.get('type'), item.get('size'), item.get('path')))
-                if first_file is None and item.get('type') == 'file':
-                    first_file = item.get('path')
+                if item.get('type') == 'file':
+                    files.append(item)
 
-        if first_file:
-            quoted = urllib.parse.quote(first_file)
-            urls = request("%s/data_assets/%s/files/urls?path=%s" % (api, asset_id, quoted), token)
-            entry['file_urls'] = urls.asdict()
-            print("  GET  …/files/urls?path=%s : %r" % (first_file, urls))
-            if urls.ok and isinstance(urls.value, dict):
-                dl = urls.value.get('download_url', '')
-                print("     download_url host=%s %s"
-                      % (urllib.parse.urlsplit(dl).netloc, url_expires_in(dl) or '(no expiry in query)'))
-        else:
+        if not files:
             print("     (no file at the root level to ask a URL for)")
+
+        # sample several files: whether an ETag is a usable MD5 varies per
+        # object (multipart uploads), so one sample says little (design SS5f)
+        entry['files'] = {}
+        for item in files[:sample]:
+            path = item.get('path')
+            fentry = {}
+            entry['files'][path] = fentry
+            quoted = urllib.parse.quote(path)
+            urls = request("%s/data_assets/%s/files/urls?path=%s" % (api, asset_id, quoted), token)
+            fentry['file_urls'] = urls.asdict()
+            print("  GET  ...(files/urls?path=%s) : %r" % (path, urls))
+            if not (urls.ok and isinstance(urls.value, dict)):
+                continue
+            dl = urls.value.get('download_url', '')
+            print("     download_url host=%s %s"
+                  % (urllib.parse.urlsplit(dl).netloc,
+                     url_expires_in(dl) or '(no expiry in query)'))
+            # can we mint an annex key without downloading? (design SS5f)
+            head = probe_signed_url_headers(dl)
+            fentry['signed_url_headers'] = head
+            if not head['ok']:
+                print("     ranged GET failed: %s %s" % (head['status'], head['error']))
+                continue
+            print("     ranged GET: etag=%r is_md5=%s content-range=%r checksums=%s"
+                  % (head['etag'], head['etag_is_md5'],
+                     head['content_range'], head['checksums'] or '{}'))
+
+        mintable = [f for f in entry['files'].values()
+                    if f.get('signed_url_headers', {}).get('etag_is_md5')]
+        if entry['files']:
+            print("     -> MD5E keys mintable without download for %d/%d sampled objects"
+                  % (len(mintable), len(entry['files'])))
 
         # one asset is enough to characterise the deployment
         break
@@ -273,6 +337,9 @@ def main(argv=None):
     parser.add_argument('--anonymous-only', action='store_true',
                         help="skip the authenticated probe even if a token is given")
     parser.add_argument('--skip-git', action='store_true', help="skip the git probes")
+    parser.add_argument('--sample', type=int, default=5, metavar='N',
+                        help="how many files to sample for download URLs and "
+                             "ETags (default: %(default)s)")
     parser.add_argument('--json', metavar='FILE', default=None,
                         help="also dump every response to FILE for later reference")
     args = parser.parse_args(argv)
@@ -281,11 +348,13 @@ def main(argv=None):
     results = {'domain': args.domain, 'capsule_id': args.capsule_id}
 
     results['anonymous'] = {}
-    probe_api(api, args.capsule_id, None, results['anonymous'], 'anonymous')
+    probe_api(api, args.capsule_id, None, results['anonymous'], 'anonymous',
+              sample=args.sample)
 
     if args.token and not args.anonymous_only:
         results['authenticated'] = {}
-        probe_api(api, args.capsule_id, args.token, results['authenticated'], 'authenticated')
+        probe_api(api, args.capsule_id, args.token, results['authenticated'],
+                  'authenticated', sample=args.sample)
     elif not args.token:
         print("\n(no --token given: skipping the authenticated probe)")
 

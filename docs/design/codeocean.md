@@ -237,8 +237,83 @@ datalad-crawler's handler) on the consumer's machine.  That is a real
 constraint, but a far smaller one than an unmaintained bespoke special remote —
 and for external assets (§5d) it does not apply.
 
-Corollary either way: `mode='fast'`/`'relaxed'` remain unusable — they skip the
-download, so nothing is checksummed.
+## 5f. Can we mint keys without downloading?
+
+Tempting, and the machinery exists: `datalad addurls --key` takes a format
+string `"[et:]<backend>[-s<bytes>]--<hash>"` (e.g. `et:MD5-s{size}--{md5sum}`)
+and creates the file with `examinekey` → `fromkey` → `registerurl`, never
+fetching a byte.  The blocker is the input.
+
+**Code Ocean publishes no checksums.**  Grepped the whole SDK for
+`hash|md5|sha|checksum|etag|digest|crc`: the only hits are *git commit* hashes.
+`FolderItem` carries exactly `name`, `path`, `type`, `size`; `DataAsset` carries
+a file *count* and a total size.  There is no per-file digest anywhere in the
+API, so a checksum-keyed crawl has no source to key from.
+
+Two ways around it, neither free:
+
+### Storage-layer ETags (opportunistic, unreliable)
+
+The presigned URL points at S3, whose `ETag` *is* the MD5 — but only for
+single-part uploads.  Anything Code Ocean uploaded as multipart returns
+`"<hex>-<N>"`, a hash of hashes, useless as an annex key.  That fails precisely
+on the large files where skipping the download would pay off.  Two mechanics
+worth knowing if we try anyway:
+
+* A SigV4 presigned URL is signed *per method*, so `HEAD` against a GET-signed
+  URL returns 403.  Use `GET` with `Range: bytes=0-0` instead: one byte on the
+  wire, and the response carries `ETag` plus `Content-Range: bytes 0-0/<total>`.
+* Newer objects may also expose `x-amz-checksum-sha256`/`-crc32` when requested
+  with `x-amz-checksum-mode: ENABLED`; whether that header survives presigning
+  is untested.
+
+So: a per-file request (cheap) yielding a usable MD5 for an unpredictable subset
+of files.  Worth measuring in the probe before building on it, and it must fall
+back to one of the other modes per file.
+
+### URL keys — the actually fast path
+
+This is the one that changes now that §5 records *stable* URLs.  An earlier
+draft of this document said `mode='fast'`/`'relaxed'` were unusable; that was
+true only while the recorded URL was a presigned one that would rot.  With
+`codeocean+https://…` recorded instead, `git annex addurl --fast` (i.e.
+`Annexificator(mode='fast')`) mints `URL--codeocean+https://…` keys with **no
+download and no extra request per file** — the directory listing already gave us
+size and path.  A whole capsule is then crawled in seconds, and uncurl retrieves
+content on demand later.
+
+Costs, all of which the user should choose knowingly:
+
+* No content verification.  `datalad get` refuses such keys unless
+  `annex.security.allow-unverified-downloads = ACKTHPPT` is set (datalad's own
+  `addurls --fast` doc says as much, in capitals).
+* No deduplication: two capsules sharing one data asset get distinct keys per
+  URL, where MD5E keys would coincide.
+* Keys embed the URL, classically making them brittle.  uncurl blunts this
+  specific edge: it reads the recorded URL for a key via `annex.geturls()` and
+  rewrites it through the `match`/`url` template before fetching, so a domain or
+  layout change on Code Ocean's side is still a config edit rather than a
+  re-keying of every dataset.
+
+### Recommendation
+
+Make it a pipeline argument, defaulting to correctness:
+
+| `mode=` | behaviour | when |
+|---|---|---|
+| `full` (default) | download, MD5E keys, verified | normal crawls |
+| `fast` | URL keys, no download, no verification | huge assets, or bulk-crawling the Open Science Library where content may never be requested |
+
+and treat ETag harvesting as a later optimisation, gated on what the probe finds:
+if most objects turn out to be single-part, an opportunistic MD5E pass gives
+verified keys at listing speed for those files and falls back to `full`/`fast`
+for the rest.  A `git annex migrate` after the fact can also upgrade URL keys to
+checksummed ones for content that does get downloaded, so `fast` is not a
+one-way door.
+
+Worth asking Code Ocean to expose per-file checksums in `POST
+data_assets/{id}/files`, incidentally — it is one optional field on `FolderItem`
+and it would make this whole section moot.
 
 ## 6. Versions
 
@@ -382,6 +457,9 @@ is needed.
    URLs minted early go stale.
 5. **Slug vs numeric id.**  The web URL uses `3822095`; the API `Capsule` record
    carries both `id` and `slug`.  Which one do the API routes accept?
+6. **How many stored objects have a single-part (= MD5) ETag?**  The probe
+   samples `--sample N` files per asset and reports the ratio; it decides
+   whether the opportunistic key-minting of §5f is worth implementing at all.
 7. **Does a 401 from the API carry a `WWW-Authenticate` header?**  Decides
    whether stock `DataladAuth` works in the URL handler or needs the
    `datalad-publicneuro`-style subclass (§8).
