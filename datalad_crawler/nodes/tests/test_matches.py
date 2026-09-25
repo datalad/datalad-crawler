@@ -118,3 +118,19 @@ def test_a_href_match_pattern3():
     eq_(len(hits), 2)
     eq_([u['url'] for u in hits], ['http://w.buxxxx.com/', 'http://w.buxxxx.com/buga/duga/du'])
     eq_([u['custom'] for u in hits], ['buxx', 'buga'])
+
+
+@pytest.mark.parametrize("base_url,expected", [
+    # gh-155: base URL without any path
+    ("https://example.com",
+     ['https://example.com/', 'https://example.com/buga/duga/du', 'http://example.com']),
+    ("https://example.com/",
+     ['https://example.com/', 'https://example.com/buga/duga/du', 'http://example.com']),
+    # relative hrefs are relative to the "directory" of the page
+    ("https://example.com/d/page.html?q=1/2",
+     ['https://example.com/', 'https://example.com/d/buga/duga/du', 'http://example.com']),
+])
+def test_a_href_match_relative_urls(base_url, expected):
+    m = a_href_match('.*')
+    hits = list(m(dict(response=sample1.response, url=base_url)))
+    eq_([u['url'] for u in hits], expected)
