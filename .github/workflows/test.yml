@@ -74,8 +74,14 @@ jobs:
       - name: Verify that building doesn't puke
         run: python3 -m build
 
-      - name: Test installation system-wide
-        run: sudo pip install .
+      # Installing into the Debian-managed system Python ("sudo pip install .")
+      # fails since pip cannot upgrade Debian-installed packages (e.g.
+      # cryptography) required by newer dependencies, so test installation
+      # into a clean virtualenv instead.
+      - name: Test installation into a clean virtualenv
+        run: |
+          python -m venv /tmp/venv-install
+          /tmp/venv-install/bin/pip install .
 
       - name: Run tests
         run: |
@@ -93,8 +99,8 @@ jobs:
           #    PYTHONPATH=$PWD make -C docs html doctest
           #fi
 
-      - name: Report WTF information using system-wide installed version
-        run: datalad wtf
+      - name: Report WTF information using the installed version
+        run: /tmp/venv-install/bin/datalad wtf
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7

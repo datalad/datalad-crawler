@@ -12,10 +12,10 @@ __docformat__ = 'restructuredtext'
 
 import re
 import types
+from urllib.parse import urljoin
 
 
 from datalad.utils import updated
-from datalad.support.network import dlurljoin
 from datalad.support.exceptions import MissingExternalDependency
 from datalad.utils import auto_repr
 
@@ -150,9 +150,12 @@ class AExtractorMatch(ExtractorMatch):
                 # it was an <a> without href
                 continue
 
-            # make it a full URL, if there was an original URL
+            # make it a full URL, if there was an original URL.
+            # Use RFC 3986 compliant urljoin, since datalad's dlurljoin
+            # loses the host for base URLs without a path, e.g.
+            # https://example.com + a.pdf -> https:///a.pdf (gh-155)
             if prev_url:
-                url = dlurljoin(prev_url, url_href)
+                url = urljoin(prev_url, url_href)
 
             if self._TARGET == 'href':
                 regex_target = url
