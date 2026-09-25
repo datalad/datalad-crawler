@@ -1,3 +1,23 @@
+# 1.1.2 (Fri Sep 25 2026)
+
+#### 🐛 Bug Fix
+
+- Fix URL joining for base URLs without path (gh-155) [#157](https://github.com/datalad/datalad-crawler/pull/157) ([@claude](https://github.com/claude) [@yarikoptic-gitmate](https://github.com/yarikoptic-gitmate))
+- Add logo [#156](https://github.com/datalad/datalad-crawler/pull/156) ([@asmacdo](https://github.com/asmacdo))
+
+#### 🏠 Internal
+
+- [gh-actions](deps): Bump actions/setup-python from 6 to 7 [#154](https://github.com/datalad/datalad-crawler/pull/154) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 4
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Austin Macdonald ([@asmacdo](https://github.com/asmacdo))
+- Claude ([@claude](https://github.com/claude))
+- GitMate for @yarikoptic ([@yarikoptic-gitmate](https://github.com/yarikoptic-gitmate))
+
+---
+
 # 1.1.1 (Tue Jul 07 2026)
 
 #### 🐛 Bug Fix
