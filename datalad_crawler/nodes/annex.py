@@ -1500,8 +1500,6 @@ def _get_branch_commits(repo, branch, limit=None, stop=None):
         # it reports none.  --first-parent follows the left side of merges
         # with any git.
         cmd.append('--first-parent')
-    elif limit is not None:
-        raise ValueError("Unknown limit: %r" % (limit,))
     cmd.extend([branch, '--'])
     for hexsha in repo.call_git_items_(cmd):
         if stop and stop == hexsha:
