@@ -1477,11 +1477,33 @@ class Annexificator(object):
         return initiate_dataset(*args, **kwargs)
 
 
-# compatibility kludge for API change post DataLad 0.12.2
 def _get_branch_commits(repo, branch, limit=None, stop=None):
-    if hasattr(repo, 'get_branch_commits_'):
-        return repo.get_branch_commits_(
-            branch, limit, stop)
-    else:
-        return repo.get_branch_commits(
-            branch, limit, stop, value='hexsha')
+    """Yield hexshas of the commits of a branch, newest first
+
+    Parameters
+    ----------
+    repo: GitRepo
+    branch: str
+    limit: None | 'left-only', optional
+      If None -- all commits; if 'left-only' -- only the commits on the left
+      side of the tree upon merges, i.e. following only the first parent of
+      merge commits.
+    stop: str, optional
+      hexsha of the commit at which to stop reporting (matched one is not
+      reported either)
+    """
+    cmd = ['rev-list']
+    if limit == 'left-only':
+        # DataLad's GitRepo.get_branch_commits_() passes --left-only, which
+        # only means something for a symmetric difference A...B: without one,
+        # git before 2.50 ignored it and reported all commits, and since 2.50
+        # it reports none.  --first-parent follows the left side of merges
+        # with any git.
+        cmd.append('--first-parent')
+    elif limit is not None:
+        raise ValueError("Unknown limit: %r" % (limit,))
+    cmd.extend([branch, '--'])
+    for hexsha in repo.call_git_items_(cmd):
+        if stop and stop == hexsha:
+            return
+        yield hexsha
